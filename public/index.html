@@ -329,9 +329,10 @@
     .inv-inst-valor { width: 106px; }
     .inv-inst-linha { gap: 8px; }
 
-    /* Barra de navegação inferior — estilo refinado */
+    /* Barra de navegação inferior — horizontal, estilo tab bar */
     .bottom-nav {
       display: flex;
+      flex-direction: row;                     /* ← corrige a verticalização */
       position: fixed;
       left: 0; right: 0; bottom: 0;
       z-index: 70;
@@ -340,6 +341,7 @@
       -webkit-backdrop-filter: blur(20px) saturate(150%);
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+      gap: 0;                                 /* anula o gap do nav base */
       padding: 6px 6px calc(8px + env(safe-area-inset-bottom));
       justify-content: space-around;
       align-items: stretch;
