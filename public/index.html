@@ -264,17 +264,83 @@
   .secao { display: none; }
   .secao.ativa { display: block; }
 
+  /* ===== Navegação inferior (mobile) ===== */
+  .bottom-nav { display: none; }
+
   @media (max-width: 900px) {
+    /* Sidebar vira topo fixo com o logo */
     .layout { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; overflow-x: auto; padding: 12px; }
-    nav { flex-direction: row; }
-    .status-card { display: none; }
-    .grid2, .grid3 { grid-template-columns: 1fr; }
-    .rosca-wrap { flex-direction: column; }
-    .legenda { width: 100%; }
-    .cat-info { width: 110px; }
-    .inv-header { flex-direction: column; align-items: flex-start; }
-    .inv-inst-info { width: 130px; }
+    .sidebar {
+      width: 100%; height: auto; position: sticky; top: 0; z-index: 60;
+      flex-direction: row; align-items: center; justify-content: space-between;
+      padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--borda);
+      background: var(--bg2);
+    }
+    .sidebar nav { display: none; }
+    .sidebar .logo { padding: 0; }
+
+    /* Conteúdo com folga para a barra inferior */
+    .conteudo { padding: 16px 14px 96px; }
+
+    /* Topo empilhado e compacto */
+    .topo { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+    .topo h1 { font-size: 21px; }
+    .acoes { width: 100%; justify-content: space-between; }
+
+    /* Filtro ocupa a largura */
+    .linha-filtro { gap: 10px; }
+    .linha-filtro select { flex: 1; min-width: 0; width: 100%; font-size: 16px; }
+
+    /* Cards de estatísticas em 2 colunas */
+    .cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .card { padding: 14px; }
+    .card .value { font-size: 20px; }
+    .card .sub { font-size: 11px; }
+
+    /* Grades e painéis */
+    .grid2, .grid3 { grid-template-columns: 1fr; gap: 12px; }
+    .painel { padding: 16px; }
+
+    /* Gráfico de rosca menor */
+    .rosca-wrap { flex-direction: column; align-items: center; }
+    .rosca-box { width: 160px; height: 160px; }
+
+    /* Tabelas: rolagem horizontal em vez de espremer */
+    #tabelaRecentes, #tabelaTodas, #tabelaParcelas {
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    #tabelaRecentes table, #tabelaTodas table, #tabelaParcelas table { min-width: 560px; }
+
+    /* Abas roláveis */
+    .tabs { overflow-x: auto; flex-wrap: nowrap; }
+
+    /* Investimentos */
+    .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .inv-header { padding: 16px 18px; }
+    .inv-patrimonio .valor { font-size: 26px; }
+    .inv-badge { display: none; }
+
+    /* Categorias e instituições com larguras reduzidas */
+    .cat-info { width: 92px; }
+    .cat-valor { width: 96px; font-size: 13px; }
+    .cat-pct { width: 38px; }
+    .cat-linha { gap: 8px; }
+    .inv-inst-info { width: 110px; }
+    .inv-inst-valor { width: 106px; }
+    .inv-inst-linha { gap: 8px; }
+
+    /* Barra de navegação inferior fixa */
+    .bottom-nav {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+      background: rgba(19,22,28,.97); backdrop-filter: blur(10px);
+      border-top: 1px solid var(--borda);
+      padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+      justify-content: space-around;
+    }
+    .bottom-nav .nav-item {
+      flex-direction: column; gap: 3px; padding: 5px 10px;
+      font-size: 11px; min-width: 58px; text-align: center; justify-content: center;
+    }
   }
 </style>
 </head>
@@ -399,6 +465,15 @@
   </main>
 </div>
 
+<!-- Barra de navegação inferior (mobile) -->
+<nav class="bottom-nav">
+  <div class="nav-item ativo" data-alvo="visao">🏠<span>Início</span></div>
+  <div class="nav-item" data-alvo="transacoes">💳<span>Movimentos</span></div>
+  <div class="nav-item" data-alvo="faturas">🧾<span>Faturas</span></div>
+  <div class="nav-item" data-alvo="investimentos">📈<span>Investir</span></div>
+  <div class="nav-item" data-alvo="categorias">🏷️<span>Categorias</span></div>
+</nav>
+
 <script>
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const MESES_CURTOS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
@@ -488,14 +563,14 @@ function variacao(atual, anterior) {
   return ((atual - anterior) / anterior) * 100;
 }
 
-// Navegação entre seções
+// Navegação entre seções (menu lateral + barra inferior)
 document.querySelectorAll(".nav-item").forEach((el) => {
   el.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("ativo"));
     el.classList.add("ativo");
     document.querySelectorAll(".secao").forEach(s => s.classList.remove("ativa"));
     document.getElementById(el.dataset.alvo).classList.add("ativa");
-    document.getElementById("tituloPagina").textContent = el.textContent.trim();
+    document.getElementById("tituloPagina").textContent = el.textContent.replace(/[🏠💳🧾📈🏷️]/g, "").trim();
   });
 });
 
