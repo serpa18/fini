@@ -1,16 +1,19 @@
 {
   "name": "fini",
   "version": "1.0.0",
-  "description": "App pessoal de análise financeira com integração Pluggy",
+  "description": "Painel financeiro pessoal conectado ao Pluggy",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js"
   },
+  "engines": {
+    "node": ">=24"
+  },
   "dependencies": {
     "@fastify/cors": "^9.0.0",
-    "better-sqlite3": "^11.0.0",
+    "@fastify/static": "^7.0.0",
     "dotenv": "^16.4.0",
     "fastify": "^4.28.0",
-    "node-cron": "^3.0.0"
+    "node-cron": "^3.0.3"
   }
 }

@@ -49,23 +49,33 @@ async function api(path) {
   return data;
 }
 
+async function getItemDetails(itemId) {
+  return api(`/items/${itemId}`);
+}
+
 async function getAccountsByItem(itemId) {
   const data = await api(`/accounts?itemId=${itemId}`);
   return data.results || [];
 }
 
-// Endpoint atual de transações: /v2/transactions, com paginação por cursor
-async function getTransactions(accountId) {
+async function getTransactions(accountId, { dateFrom, dateTo } = {}) {
   const all = [];
   let next = null;
+
+  const params = new URLSearchParams();
+  params.set("accountId", accountId);
+  if (dateFrom) params.set("dateFrom", dateFrom);
+  if (dateTo) params.set("dateTo", dateTo);
+
   do {
     const path = next
       ? `/v2/transactions${next}`
-      : `/v2/transactions?accountId=${accountId}`;
+      : `/v2/transactions?${params.toString()}`;
     const data = await api(path);
     all.push(...(data.results || []));
     next = data.next || null;
   } while (next);
+
   return all;
 }
 
@@ -79,4 +89,16 @@ async function getInvestments(itemId) {
   return data.results || [];
 }
 
-module.exports = { getItemIds, getAccountsByItem, getTransactions, getCreditCards, getInvestments };
+async function getBills(accountId) {
+  // Endpoint atual: faturas vinculadas à conta de crédito
+  try {
+    const data = await api(`/bills?accountId=${accountId}`);
+    if (data.results) return data.results;
+  } catch (e) {
+    // tenta o endpoint legado (cartão)
+  }
+  const legacy = await api(`/credit-cards/${accountId}/bills`);
+  return legacy.results || legacy.bills || [];
+}
+
+module.exports = { getItemIds, getItemDetails, getAccountsByItem, getTransactions, getCreditCards, getInvestments, getBills };
