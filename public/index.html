@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fini — Visão Geral</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e1014; --bg2: #13161c; --card: #171a21; --borda: #232833;
+    --texto: #e6e9ef; --texto2: #8a93a6; --texto3: #5c6474;
+    --verde: #22c55e; --verde2: #16a34a; --vermelho: #f43f5e; --azul: #3b82f6;
+  }
+  body {
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--texto);
+    -webkit-font-smoothing: antialiased;
+  }
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 236px; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+    background: var(--bg2); border-right: 1px solid var(--borda);
+    padding: 20px 14px; display: flex; flex-direction: column; gap: 24px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+  .logo-box {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--verde), var(--verde2));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #0b0f0d; font-size: 17px;
+  }
+  .logo .nome { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+  nav { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    color: var(--texto2); font-size: 14px; display: flex; align-items: center; gap: 11px;
+    transition: background .15s, color .15s; border: 1px solid transparent;
+  }
+  .nav-item:hover { background: #1b1f28; color: var(--texto); }
+  .nav-item.ativo { background: #1e2430; color: #fff; font-weight: 600; border-color: #2a3140; }
+  .status-card {
+    margin-top: auto; background: var(--card); border: 1px solid var(--borda);
+    border-radius: 12px; padding: 12px; display: flex; gap: 10px; align-items: center;
+  }
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px rgba(34,197,94,.7); }
+  .status-titulo { font-size: 13px; font-weight: 600; }
+  .status-sub { font-size: 11px; color: var(--texto2); margin-top: 2px; }
+
+  .conteudo { flex: 1; padding: 26px 32px 34px; max-width: 1240px; }
+  .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .topo h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .subtitulo { color: var(--texto2); font-size: 13px; margin-top: 4px; }
+  .acoes { display: flex; gap: 10px; align-items: center; }
+  .perfil {
+    display: flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px;
+    background: var(--card); border: 1px solid var(--borda); border-radius: 999px;
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+  }
+  .perfil .pnome { font-size: 13px; font-weight: 600; }
+  button {
+    background: var(--azul); color: #fff; border: 0; padding: 10px 18px;
+    border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s;
+  }
+  button:hover { background: #2563eb; }
+  button:disabled { opacity: .6; cursor: wait; }
+  button.link { background: transparent; color: var(--azul); padding: 4px 8px; font-size: 13px; }
+  button.link:hover { background: rgba(59,130,246,.12); }
+
+  .linha-filtro {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .linha-filtro label { color: var(--texto2); font-size: 13px; }
+  select {
+    background: var(--card); color: var(--texto); border: 1px solid var(--borda);
+    border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  select:focus { outline: none; border-color: var(--azul); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .card { background: var(--card); border: 1px solid var(--borda); border-radius: 16px; padding: 18px; }
+  .card .label { color: var(--texto2); font-size: 12.5px; margin-bottom: 8px; }
+  .card .value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .card .sub { color: var(--texto2); font-size: 12px; margin-top: 8px; }
+  .card .variacao { font-size: 12px; margin-top: 6px; font-weight: 600; }
+  .positivo { color: var(--verde); }
+  .negativo { color: var(--vermelho); }
+  .neutro { color: var(--texto); }
+
+  .grid2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+  .painel { background: var(--card); border: 1px solid var(--borda); border-radius: 16px; padding: 20px; }
+  .painel-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .painel h2 { font-size: 15px; font-weight: 600; color: #f3f4f6; }
+  .painel .desc { color: var(--texto2); font-size: 12px; margin-bottom: 16px; }
+  .mini { padding: 16px 18px; }
+  .mini .label { color: var(--texto2); font-size: 12px; margin-bottom: 6px; }
+  .mini .value { font-size: 20px; font-weight: 700; }
+  .mini .sub { color: var(--texto2); font-size: 12px; margin-top: 6px; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab {
+    padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    color: var(--texto2); background: transparent; border: 1px solid transparent;
+  }
+  .tab:hover { color: var(--texto); }
+  .tab.ativo { background: #1e2430; color: #fff; font-weight: 600; border-color: #2a3140; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--texto3); padding: 8px 10px; border-bottom: 1px solid var(--borda);
+  }
+  tbody td { padding: 11px 10px; border-bottom: 1px solid #1c2029; font-size: 13.5px; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: #191d26; }
+  .icone-cat {
+    width: 34px; height: 34px; border-radius: 9px; background: #232833;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .cat-nome { font-weight: 600; color: #f3f4f6; }
+  .cat-sub { color: var(--texto3); font-size: 12px; margin-top: 2px; }
+
+  .rosca-wrap { display: flex; align-items: center; gap: 24px; }
+  .rosca-box { position: relative; width: 190px; height: 190px; flex-shrink: 0; }
+  .rosca-box canvas { width: 100% !important; height: 100% !important; }
+  .rosca-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none; text-align: center;
+  }
+  .rosca-center .total { font-size: 18px; font-weight: 700; }
+  .rosca-center .leg { font-size: 11px; color: var(--texto2); margin-top: 2px; }
+  .legenda { flex: 1; display: grid; grid-template-columns: 1fr; gap: 7px; }
+  .legenda .l { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; }
+  .legenda .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .legenda .l b { margin-left: auto; color: #f3f4f6; font-weight: 600; }
+
+  .cat-linha { display: flex; align-items: center; gap: 14px; padding: 13px 4px; border-bottom: 1px solid #1c2029; }
+  .cat-linha:last-child { border-bottom: 0; }
+  .cat-info { width: 160px; flex-shrink: 0; }
+  .cat-info .nome { font-weight: 600; font-size: 14px; }
+  .cat-info .sub { color: var(--texto3); font-size: 12px; margin-top: 2px; }
+  .cat-barra { flex: 1; height: 8px; background: #232833; border-radius: 4px; overflow: hidden; }
+  .cat-barra .fill { height: 100%; border-radius: 4px; }
+  .cat-valor { width: 130px; text-align: right; font-weight: 700; font-size: 14px; }
+  .cat-pct { width: 60px; text-align: right; color: var(--texto2); font-size: 13px; }
+
+  /* ===== Investimentos ===== */
+  .inv-header {
+    background: linear-gradient(135deg, #1a2332 0%, #141a26 100%);
+    border: 1px solid var(--borda);
+    border-left: 3px solid #10b981;
+    border-radius: 16px;
+    padding: 22px 26px;
+    margin-bottom: 20px;
+  }
+  .inv-patrimonio .label { color: var(--texto2); font-size: 13px; margin-bottom: 8px; }
+  .inv-patrimonio .valor {
+    font-size: 34px; font-weight: 800; letter-spacing: -0.03em; color: #fff;
+  }
+  .inv-patrimonio .sub { color: var(--texto2); font-size: 12.5px; margin-top: 6px; }
+
+  .inv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .inv-card {
+    background: var(--card); border: 1px solid var(--borda);
+    border-radius: 16px; padding: 18px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .inv-card-topo { display: flex; align-items: center; gap: 12px; }
+  .inv-icone {
+    width: 40px; height: 40px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    flex-shrink: 0;
+  }
+  .inv-titulo { font-weight: 700; font-size: 14.5px; color: #f3f4f6; }
+  .inv-sub { color: var(--texto2); font-size: 12px; margin-top: 2px; }
+  .inv-badge {
+    margin-left: auto;
+    font-size: 12px; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    color: #f3f4f6;
+    white-space: nowrap;
+  }
+  .inv-valor { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+  .inv-barra-linha { display: flex; align-items: center; gap: 10px; }
+  .inv-barra {
+    flex: 1; height: 7px; background: #232833; border-radius: 4px; overflow: hidden;
+  }
+  .inv-barra .fill { height: 100%; border-radius: 4px; }
+  .inv-aloc { color: var(--texto2); font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+  .inv-dist {
+    background: var(--card); border: 1px solid var(--borda);
+    border-radius: 16px; padding: 22px 24px; margin-bottom: 20px;
+  }
+  .inv-dist-topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+  .inv-dist h3 { font-size: 15px; font-weight: 700; color: #f3f4f6; }
+  .inv-dist .desc { color: var(--texto2); font-size: 12px; margin-top: 3px; margin-bottom: 18px; }
+  .inv-status {
+    font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+    background: rgba(16,185,129,.12); color: #34d399; border: 1px solid rgba(16,185,129,.3);
+  }
+  .inv-segmentada {
+    display: flex; height: 14px; width: 100%;
+    border-radius: 7px; overflow: hidden; background: #232833;
+    margin-bottom: 18px;
+  }
+  .inv-segmentada .seg { height: 100%; }
+  .inv-legenda { display: flex; gap: 22px; flex-wrap: wrap; }
+  .inv-leg-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; }
+  .inv-leg-item .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .inv-leg-item b { color: #f3f4f6; font-weight: 700; margin-left: 2px; }
+
+  .inv-footer {
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 12px 18px;
+    color: var(--texto3); font-size: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ===== Instituições (montante investido por banco) ===== */
+  .inv-inst {
+    background: var(--card); border: 1px solid var(--borda);
+    border-radius: 16px; padding: 22px 24px; margin-bottom: 20px;
+  }
+  .inv-inst h3 { font-size: 15px; font-weight: 700; color: #f3f4f6; }
+  .inv-inst .desc { color: var(--texto2); font-size: 12px; margin-top: 3px; margin-bottom: 4px; }
+  .inv-inst-linha {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 4px; border-bottom: 1px solid #1c2029;
+  }
+  .inv-inst-linha:last-child { border-bottom: 0; }
+  .inv-inst-info { width: 200px; flex-shrink: 0; }
+  .inv-inst-info .nome { font-weight: 600; font-size: 14px; color: #f3f4f6; }
+  .inv-inst-info .sub { color: var(--texto3); font-size: 12px; margin-top: 2px; }
+  .inv-inst-barra { flex: 1; height: 8px; background: #232833; border-radius: 4px; overflow: hidden; }
+  .inv-inst-barra .fill { height: 100%; border-radius: 4px; }
+  .inv-inst-valor { width: 150px; text-align: right; }
+  .inv-inst-valor .v { font-weight: 700; font-size: 14.5px; color: #fff; }
+  .inv-inst-valor .p { color: var(--verde); font-size: 12.5px; font-weight: 600; margin-top: 2px; }
+
+  .rodape { margin-top: 26px; text-align: center; color: var(--texto3); font-size: 12px; }
+  .vazio { color: var(--texto2); text-align: center; padding: 30px 12px; font-size: 13.5px; }
+  .aviso {
+    background: #1a1f2b; border: 1px solid #2a3140; border-radius: 12px;
+    padding: 14px 16px; color: var(--texto2); font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .secao { display: none; }
+  .secao.ativa { display: block; }
+
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; overflow-x: auto; padding: 12px; }
+    nav { flex-direction: row; }
+    .status-card { display: none; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .rosca-wrap { flex-direction: column; }
+    .legenda { width: 100%; }
+    .cat-info { width: 110px; }
+    .inv-header { flex-direction: column; align-items: flex-start; }
+    .inv-inst-info { width: 130px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo"><div class="logo-box">F</div><div class="nome">Fini</div></div>
+    <nav>
+      <div class="nav-item ativo" data-alvo="visao">🏠 Visão Geral</div>
+      <div class="nav-item" data-alvo="transacoes">💳 Transações</div>
+      <div class="nav-item" data-alvo="faturas">🧾 Faturas</div>
+      <div class="nav-item" data-alvo="investimentos">📈 Investimentos</div>
+      <div class="nav-item" data-alvo="categorias">🏷️ Categorias</div>
+    </nav>
+    <div class="status-card">
+      <div class="status-dot"></div>
+      <div>
+        <div class="status-titulo" id="statusTitulo">Sincronização ativa</div>
+        <div class="status-sub" id="statusSub">Dados do Pluggy • diária às 3h</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="conteudo">
+    <header class="topo">
+      <div>
+        <h1 id="tituloPagina">Visão Geral</h1>
+        <div class="subtitulo" id="saudacao"></div>
+      </div>
+      <div class="acoes">
+        <button id="btnSync">⚡ Sincronizar agora</button>
+        <div class="perfil"><div class="avatar">G</div><div class="pnome">Gabriel</div></div>
+      </div>
+    </header>
+
+    <!-- ===== VISÃO GERAL ===== -->
+    <section class="secao ativa" id="visao">
+      <div class="linha-filtro">
+        <label>Mês de visualização:</label>
+        <select id="seletorMes"></select>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="grid2">
+        <div class="painel">
+          <div class="painel-topo"><h2>Fluxo Mensal</h2></div>
+          <div class="desc" id="descFluxo">Entradas versus Saídas do ano</div>
+          <canvas id="grafico" height="240"></canvas>
+        </div>
+        <div class="painel">
+          <div class="painel-topo"><h2>Onde seu dinheiro foi</h2></div>
+          <div class="desc" id="descRosca">Despesas do mês por categoria</div>
+          <div id="roscaArea"></div>
+        </div>
+      </div>
+      <div class="grid3" id="melhores"></div>
+      <div class="painel">
+        <div class="painel-topo">
+          <h2>Transações recentes</h2>
+          <button class="link" id="btnVerTodas">Ver todas →</button>
+        </div>
+        <div class="desc">Últimas movimentações registradas</div>
+        <div id="tabelaRecentes"></div>
+      </div>
+    </section>
+
+    <!-- ===== TRANSAÇÕES ===== -->
+    <section class="secao" id="transacoes">
+      <div class="painel">
+        <div class="painel-topo"><h2>Todas as transações</h2></div>
+        <div class="tabs">
+          <div class="tab ativo" data-filtro="todas">Todas</div>
+          <div class="tab" data-filtro="entradas">Entradas</div>
+          <div class="tab" data-filtro="saidas">Saídas</div>
+        </div>
+        <div id="tabelaTodas"></div>
+      </div>
+    </section>
+
+    <!-- ===== FATURAS ===== -->
+    <section class="secao" id="faturas">
+      <div class="cards" id="faturasCards"></div>
+      <div class="painel">
+        <div class="painel-topo"><h2>Compras parceladas ativas</h2></div>
+        <div class="desc">Parcelas em aberto nos seus cartões</div>
+        <div id="tabelaParcelas"></div>
+      </div>
+    </section>
+
+    <!-- ===== INVESTIMENTOS ===== -->
+    <section class="secao" id="investimentos">
+      <div id="invConteudo"></div>
+    </section>
+
+    <!-- ===== CATEGORIAS ===== -->
+    <section class="secao" id="categorias">
+      <div class="painel">
+        <div class="painel-topo"><h2>Categorias</h2></div>
+        <div class="desc">Ranking de gastos do mês por categoria</div>
+        <div id="categoriasLista"></div>
+      </div>
+    </section>
+
+    <footer class="rodape" id="rodapeSync">Dados sincronizados do Pluggy via Open Finance Brasil</footer>
+  </main>
+</div>
+
+<script>
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const MESES_CURTOS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const PALETA = ["#f43f5e", "#f472b6", "#a78bfa", "#818cf8", "#38bdf8", "#34d399", "#fbbf24", "#fb923c", "#22d3ee", "#fda4af"];
+const ICONE_CAT = { "Moradia":"🏠", "Alimentação":"🍔", "Transporte":"🚗", "Assinaturas":"🎬", "Saúde":"💊", "Lazer":"🍿", "Educação":"🎓", "Compras":"🛍️", "Serviços":"🛠️", "Transferências":"🔄", "Outros":"📌" };
+const mesesLongos = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+
+// Classes de investimento alinhadas às categorias do seu Pluggy:
+// Fundo Imobiliário, Ações (Stock), Fundo de Renda Fixa, ETF, Tesouro, CDB
+const INV_CLASSES = [
+  { chave: "Fundo Imobiliário", icone: "🏢", cor: "#8b5cf6", tipos: ["FII", "FUNDO IMOBILIARIO", "REIT"] },
+  { chave: "Ações", icone: "📈", cor: "#3b82f6", tipos: ["STOCK", "ACAO", "AÇÃO", "ACOES", "EQUITY", "BDR", "SHARES", "EQUITIES"] },
+  { chave: "Fundo de Renda Fixa", icone: "📊", cor: "#06b6d4", tipos: ["FUNDO DE RENDA FIXA", "FUNDO RENDA FIXA", "FIXED INCOME FUND", "MUTUAL FUND", "FUNDO", "FUND"] },
+  { chave: "ETF", icone: "📦", cor: "#38bdf8", tipos: ["ETF", "EXCHANGE TRADED FUND", "EXCHANGE TRADED"] },
+  { chave: "Tesouro", icone: "🏛️", cor: "#f59e0b", tipos: ["TESOURO", "TREASURY", "LTN", "NTN", "LFT"] },
+  { chave: "CDB", icone: "🏦", cor: "#10b981", tipos: ["CDB", "LCI", "LCA", "CRI", "CRA", "DEBENTURE", "BOND", "POUPANÇA", "POUPANCA"] },
+  { chave: "Criptoativos", icone: "🪙", cor: "#f59e0b", tipos: ["CRYPTO", "CRIPTO", "BITCOIN", "BTC", "ETHEREUM", "ETH"] },
+];
+
+// Classifica usando type + subtype + code + name.
+// O subtype do Pluggy vem como "REAL_ESTATE_FUND" (com underscore) e o type
+// como "EQUITY". FIIs também chegam com subtype "STOCK" (ex.: BTCI11, SNAG11),
+// então o que separa de verdade é o ticker terminando em "11" (convenção B3).
+// ETFs também terminam em "11" (BOVA11), por isso são checados ANTES.
+function classificarInvestimento(inv) {
+  const type = (inv.type || "").toUpperCase();
+  const subtype = (inv.subtype || "").toUpperCase().replace(/_/g, " ").replace(/-/g, " ");
+  const name = (inv.name || "").toUpperCase();
+  const code = (inv.code || "").toUpperCase();
+  const alvo = type + " " + subtype + " " + name + " " + code;
+
+  // 1) ETF primeiro: BOVA11, IVVB11... também terminam em "11"
+  const ehETF = type.includes("ETF") || subtype.includes("ETF") || name.includes("ETF") || code.includes("ETF");
+  if (ehETF) return INV_CLASSES.find(x => x.chave === "ETF");
+
+  // 2) Fundo Imobiliário: subtype REAL ESTATE ou ticker terminando em "11"
+  const ehFII =
+    subtype.includes("REAL ESTATE") || subtype.includes("FII") || subtype.includes("IMOBILIARIO") ||
+    name.includes("FII") || name.includes("FUNDO IMOBILIARIO") || name.includes("IMOBILIARIO") ||
+    code.includes("FII") ||
+    /11$/.test(code) || /11$/.test(name);
+  if (ehFII) return INV_CLASSES.find(x => x.chave === "Fundo Imobiliário");
+
+  // 3) Demais classes, específicas primeiro
+  const prioridade = ["Tesouro", "CDB", "Ações", "Criptoativos", "Fundo de Renda Fixa"];
+  for (const chave of prioridade) {
+    const c = INV_CLASSES.find(x => x.chave === chave);
+    if (c && c.tipos.some(x => alvo.includes(x))) return c;
+  }
+  return { chave: "Outros", icone: "📦", cor: "#64748b", tipos: [] };
+}
+
+const hora = new Date().getHours();
+const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
+document.getElementById("saudacao").textContent = saudacao + ", bem-vindo de volta • Gestão financeira inteligente";
+
+function mesNome(mes) {
+  if (!mes) return "";
+  const [ano, m] = mes.split("-");
+  return MESES[parseInt(m, 10) - 1] + " de " + ano;
+}
+function mesCurto(mes) {
+  if (!mes) return "";
+  const [ano, m] = mes.split("-");
+  return MESES_CURTOS[parseInt(m, 10) - 1] + "/" + ano.slice(2);
+}
+function dataBonita(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.getDate() + " de " + mesesLongos[d.getMonth()] + " às " +
+    String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+function fmtData(iso) {
+  if (!iso) return "—";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso.split("-").reverse().join("/");
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+}
+function pctTxt(p) {
+  if (p === null || p === undefined || !isFinite(p)) return "";
+  return (p >= 0 ? "+" : "") + p.toFixed(1).replace(".", ",") + "%";
+}
+function variacao(atual, anterior) {
+  if (!anterior) return null;
+  return ((atual - anterior) / anterior) * 100;
+}
+
+// Navegação entre seções
+document.querySelectorAll(".nav-item").forEach((el) => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("ativo"));
+    el.classList.add("ativo");
+    document.querySelectorAll(".secao").forEach(s => s.classList.remove("ativa"));
+    document.getElementById(el.dataset.alvo).classList.add("ativa");
+    document.getElementById("tituloPagina").textContent = el.textContent.trim();
+  });
+});
+
+// Tabela de transações (reutilizável)
+function montarTabela(tx, filtro) {
+  const lista = filtro === "entradas" ? tx.filter(t => t.amount > 0)
+              : filtro === "saidas" ? tx.filter(t => t.amount < 0) : tx;
+  if (!lista.length) return `<div class="vazio">Nenhuma transação encontrada.</div>`;
+  return `<table>
+    <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead>
+    <tbody>
+      ${lista.map(t => {
+        const data = fmtData(t.date);
+        const icone = ICONE_CAT[t.category] || "📌";
+        const valor = t.amount >= 0
+          ? `<span class="positivo">+${fmt(t.amount)}</span>`
+          : `<span class="negativo">${fmt(t.amount)}</span>`;
+        return `<tr>
+          <td style="color:var(--texto2);white-space:nowrap">${data}</td>
+          <td><span class="icone-cat">${icone}</span></td>
+          <td><div class="cat-nome">${t.merchant || t.description || "Sem descrição"}</div><div class="cat-sub">${t.category}</div></td>
+          <td style="text-align:right;font-weight:600;white-space:nowrap">${valor}</td>
+        </tr>`;
+      }).join("")}
+    </tbody>
+  </table>`;
+}
+
+// Tabela de compras parceladas
+function montarTabelaParcelas(parcs) {
+  if (!parcs.length) return `<div class="vazio">Nenhuma compra parcelada em aberto.</div>`;
+  return `<table>
+    <thead><tr><th>Data</th><th>Descrição</th><th>Parcela</th><th style="text-align:right">Valor</th></tr></thead>
+    <tbody>
+      ${parcs.map(p => {
+        const parcela = p.total_installments > 1
+          ? `Parcela ${p.installment_number || "?"} de ${p.total_installments}`
+          : "À vista";
+        const status = (p.status || "") === "PENDING" ? "• Pendente" : "";
+        return `<tr>
+          <td style="color:var(--texto2);white-space:nowrap">${fmtData(p.date)}</td>
+          <td><div class="cat-nome">${p.merchant || p.description || "Sem descrição"}</div><div class="cat-sub">${p.category || ""} ${status}</div></td>
+          <td>${parcela}</td>
+          <td style="text-align:right;font-weight:600;white-space:nowrap"><span class="negativo">${fmt(p.amount)}</span></td>
+        </tr>`;
+      }).join("")}
+    </tbody>
+  </table>`;
+}
+
+let txLimite = 10;
+let filtroAtual = "todas";
+let mesSelecionado = null; // YYYY-MM
+let graficoFluxo = null;
+let graficoRosca = null;
+
+// Monta o seletor de meses do ano vigente (com dados) e define o mês padrão
+function montarSeletor(monthlyAno) {
+  const sel = document.getElementById("seletorMes");
+  const mesesComDados = monthlyAno.map(m => m.mes).sort(); // ordem crescente
+  if (!mesesComDados.length) {
+    sel.innerHTML = `<option value="">Sem dados no ano</option>`;
+    return;
+  }
+  sel.innerHTML = mesesComDados.map(m =>
+    `<option value="${m}">${mesNome(m)}</option>`).join("");
+  const atual = new Date();
+  const mesAtual = atual.getFullYear() + "-" + String(atual.getMonth() + 1).padStart(2, "0");
+  mesSelecionado = mesesComDados.includes(mesAtual) ? mesAtual : mesesComDados[mesesComDados.length - 1];
+  sel.value = mesSelecionado;
+}
+
+async function carregarVisao() {
+  try {
+    const anoAtual = new Date().getFullYear();
+
+    const [monthlyAno, melhores, saldoRes, invRes, invInst] = await Promise.all([
+      fetch(`/api/monthly?ano=${anoAtual}`).then(r => r.json()),
+      fetch("/api/melhores").then(r => r.json()),
+      fetch("/api/saldo").then(r => r.json()),
+      fetch("/api/investimentos").then(r => r.json()),
+      fetch("/api/investimentos/instituicoes").then(r => r.json()),
+    ]);
+
+    if (!document.getElementById("seletorMes").options.length) {
+      montarSeletor(monthlyAno);
+    }
+
+    const fluxo = [...monthlyAno].reverse();
+    const ctxG = document.getElementById("grafico").getContext("2d");
+    const g1 = ctxG.createLinearGradient(0, 0, 0, 250); g1.addColorStop(0, "rgba(34,197,94,.28)"); g1.addColorStop(1, "rgba(34,197,94,0)");
+    const g2 = ctxG.createLinearGradient(0, 0, 0, 250); g2.addColorStop(0, "rgba(244,63,94,.25)"); g2.addColorStop(1, "rgba(244,63,94,0)");
+    if (graficoFluxo) graficoFluxo.destroy();
+    graficoFluxo = new Chart(ctxG, {
+      type: "line",
+      data: {
+        labels: fluxo.map(m => mesCurto(m.mes)),
+        datasets: [
+          { label: "Entradas", data: fluxo.map(m => m.ganhos), borderColor: "#22c55e", backgroundColor: g1, fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2 },
+          { label: "Saídas", data: fluxo.map(m => m.gastos), borderColor: "#f43f5e", backgroundColor: g2, fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2 },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#9ca3af", usePointStyle: true, pointStyle: "circle", padding: 16 } } },
+        scales: {
+          x: { ticks: { color: "#6b7280" }, grid: { color: "rgba(255,255,255,.04)" } },
+          y: { ticks: { color: "#6b7280", callback: (v) => "R$ " + v }, grid: { color: "rgba(255,255,255,.04)" } },
+        },
+      },
+    });
+    document.getElementById("descFluxo").textContent = "Entradas versus Saídas de " + anoAtual;
+
+    const melhoresEl = document.getElementById("melhores");
+    if (!melhores.maiorGanho) {
+      melhoresEl.innerHTML = `<div class="card vazio">Sem histórico mensal ainda.</div>`;
+    } else {
+      melhoresEl.innerHTML = `
+        <div class="painel mini"><div class="label">Maior ganho • Recorde</div><div class="value positivo">${fmt(melhores.maiorGanho.valor)}</div><div class="sub">${mesNome(melhores.maiorGanho.mes)}</div></div>
+        <div class="painel mini"><div class="label">Pico de gastos</div><div class="value negativo">${fmt(melhores.picoGastos.valor)}</div><div class="sub">${mesNome(melhores.picoGastos.mes)}</div></div>
+        <div class="painel mini"><div class="label">Poupança de ${melhores.ano}</div><div class="value ${melhores.poupancaAno >= 0 ? "positivo" : "negativo"}">${fmt(melhores.poupancaAno)}</div><div class="sub">Entradas − saídas do ano</div></div>`;
+    }
+
+    await carregarCardsMes();
+
+    if (monthlyAno.length) {
+      await carregarCategorias(monthlyAno[0].mes);
+    }
+
+    const tx = await fetch(`/api/transactions?limit=200`).then(r => r.json());
+    document.getElementById("tabelaRecentes").innerHTML = montarTabela(tx.slice(0, txLimite), "todas");
+    document.getElementById("tabelaTodas").innerHTML = montarTabela(tx, filtroAtual);
+    document.getElementById("btnVerTodas").style.display = tx.length > txLimite ? "" : "none";
+
+    renderInvestimentos(invRes, invInst);
+    carregarFaturas();
+
+    try {
+      const info = await fetch("/api/syncinfo").then(r => r.json());
+      if (info.lastSyncAt) {
+        document.getElementById("rodapeSync").textContent =
+          "Atualizado em " + dataBonita(info.lastSyncAt) + " • Dados do Pluggy via Open Finance Brasil";
+      }
+      if (info.consentExpiresAt) {
+        const dias = Math.floor((new Date(info.consentExpiresAt) - Date.now()) / 86400000);
+        if (dias < 60) {
+          document.getElementById("statusTitulo").textContent = "Consentimento expira em " + dias + " dias";
+          document.getElementById("statusTitulo").style.color = "#fbbf24";
+          document.getElementById("statusSub").textContent = "Renove no dashboard do Pluggy";
+        }
+      }
+    } catch (e) { /* segue sem metadados */ }
+  } catch (err) {
+    document.getElementById("cards").innerHTML =
+      `<div class="card vazio">Erro ao carregar: ${err.message}. Confira se o servidor está rodando.</div>`;
+  }
+}
+
+async function carregarCardsMes() {
+  const insights = await fetch(`/api/insights?mes=${mesSelecionado}`).then(r => r.json());
+  const saldoRes = await fetch("/api/saldo").then(r => r.json());
+  const invRes = await fetch("/api/investimentos").then(r => r.json());
+
+  const cards = document.getElementById("cards");
+  if (Array.isArray(insights) && insights.length === 0) {
+    cards.innerHTML = `<div class="card vazio">Sem dados para ${mesNome(mesSelecionado)}.</div>`;
+  } else {
+    const i = insights;
+    const invTotal = invRes.reduce((s, x) => s + (x.balance || 0), 0);
+    const receitaComprometida = i.ganhos > 0 ? Math.round((i.gastos / i.ganhos) * 100) : 0;
+    cards.innerHTML = `
+      <div class="card">
+        <div class="label">Saldo Total</div>
+        <div class="value ${saldoRes.total >= 0 ? "positivo" : "negativo"}">${fmt(saldoRes.total)}</div>
+        <div class="sub">Disponível em contas correntes</div>
+      </div>
+      <div class="card">
+        <div class="label">Entradas · ${mesNome(i.mes)}</div>
+        <div class="value positivo">${fmt(i.ganhos)}</div>
+        <div class="sub">Total recebido no mês</div>
+      </div>
+      <div class="card">
+        <div class="label">Saídas · ${mesNome(i.mes)}</div>
+        <div class="value negativo">${fmt(i.gastos)}</div>
+        <div class="sub">${receitaComprometida}% da receita comprometida</div>
+      </div>
+      <div class="card">
+        <div class="label">Investimentos</div>
+        <div class="value neutro">${invTotal ? fmt(invTotal) : "—"}</div>
+        <div class="sub">${invRes.length ? invRes.length + " ativo(s) pela conexão" : "Seu banco não expõe investimentos"}</div>
+      </div>`;
+  }
+
+  const rank = await fetch(`/api/ranking/${mesSelecionado}`).then(r => r.json());
+  const roscaArea = document.getElementById("roscaArea");
+  if (!rank.length) {
+    roscaArea.innerHTML = `<div class="vazio">Sem gastos em ${mesNome(mesSelecionado)}.</div>`;
+  } else {
+    const total = rank.reduce((s, r) => s + r.total, 0);
+    roscaArea.innerHTML = `
+      <div class="rosca-wrap">
+        <div class="rosca-box">
+          <canvas id="rosca"></canvas>
+          <div class="rosca-center"><div class="total">${fmt(total)}</div><div class="leg">gastos no mês</div></div>
+        </div>
+        <div class="legenda">
+          ${rank.slice(0, 8).map((r, i) => {
+            const pct = Math.round((r.total / total) * 100);
+            return `<div class="l"><span class="dot" style="background:${PALETA[i % PALETA.length]}"></span>${r.category}<b>${pct}%</b></div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    if (graficoRosca) graficoRosca.destroy();
+    graficoRosca = new Chart(document.getElementById("rosca"), {
+      type: "doughnut",
+      data: {
+        labels: rank.map(r => r.category),
+        datasets: [{ data: rank.map(r => r.total), backgroundColor: rank.map((_, i) => PALETA[i % PALETA.length]), borderWidth: 0, hoverOffset: 6 }],
+      },
+      options: { responsive: true, cutout: "72%", plugins: { legend: { display: false } } },
+    });
+  }
+  document.getElementById("descRosca").textContent = "Despesas de " + mesNome(mesSelecionado) + " por categoria";
+}
+
+// Página Categorias: independente do seletor de mês (mostra o mês mais recente)
+async function carregarCategorias(mes) {
+  const rank = await fetch(`/api/ranking/${mes}`).then(r => r.json());
+  const catLista = document.getElementById("categoriasLista");
+  if (!rank.length) {
+    catLista.innerHTML = `<div class="vazio">Sem gastos em ${mesNome(mes)} para classificar.</div>`;
+  } else {
+    const max = rank[0].total;
+    const total = rank.reduce((s, r) => s + r.total, 0);
+    catLista.innerHTML = rank.map((r, i) => `
+      <div class="cat-linha">
+        <div class="icone-cat">${ICONE_CAT[r.category] || "📌"}</div>
+        <div class="cat-info"><div class="nome">${r.category}</div></div>
+        <div class="cat-barra"><div class="fill" style="width:${Math.max(4, (r.total / max) * 100)}%;background:${PALETA[i % PALETA.length]}"></div></div>
+        <div class="cat-valor negativo">${fmt(r.total)}</div>
+        <div class="cat-pct">${Math.round((r.total / total) * 100)}%</div>
+      </div>`).join("");
+  }
+  const desc = document.querySelector("#categorias .desc");
+  if (desc) desc.textContent = "Ranking de gastos de " + mesNome(mes) + " por categoria";
+}
+
+// ===== Faturas =====
+async function carregarFaturas() {
+  try {
+    const [fats, parcs] = await Promise.all([
+      fetch("/api/faturas").then(r => r.json()),
+      fetch("/api/parcelas").then(r => r.json()),
+    ]);
+
+    const area = document.getElementById("faturasCards");
+
+    if (!fats.length) {
+      area.innerHTML = `<div class="card">
+        <div class="label">Próximas faturas</div>
+        <div class="value neutro">—</div>
+        <div class="sub">Seu banco não devolve faturas via Pluggy</div>
+      </div>`;
+    } else {
+      const totalFuturo = fats.reduce((s, f) => s + (f.total_amount || 0), 0);
+      const cards = [
+        `<div class="card">
+          <div class="label">Próximas faturas</div>
+          <div class="value positivo">${fmt(totalFuturo)}</div>
+          <div class="sub">${fats.length} fatura(s) em aberto</div>
+        </div>`,
+        ...fats.slice(0, 5).map(f => `
+          <div class="card">
+            <div class="label">${f.cartao || "Cartão"} • Vence ${fmtData(f.due_date)}</div>
+            <div class="value positivo">${fmt(f.total_amount)}</div>
+            <div class="sub">Mínimo: ${fmt(f.minimum_payment)}</div>
+          </div>`),
+      ];
+      area.innerHTML = cards.join("");
+    }
+
+    document.getElementById("tabelaParcelas").innerHTML = montarTabelaParcelas(parcs);
+  } catch (err) {
+    document.getElementById("faturasCards").innerHTML =
+      `<div class="card vazio">Erro ao carregar faturas: ${err.message}</div>`;
+  }
+}
+
+// ===== Investimentos =====
+function renderInvestimentos(invRes, invInst) {
+  const container = document.getElementById("invConteudo");
+  const total = invRes.reduce((s, x) => s + (x.balance || 0), 0);
+
+  const grupos = {};
+  for (const inv of invRes) {
+    const cls = classificarInvestimento(inv);
+    if (!grupos[cls.chave]) grupos[cls.chave] = { ...cls, total: 0, n: 0 };
+    grupos[cls.chave].total += inv.balance || 0;
+    grupos[cls.chave].n += 1;
+  }
+  const classes = Object.values(grupos).sort((a, b) => b.total - a.total);
+
+  const maiorAloc = total > 0 && classes.length ? (classes[0].total / total) * 100 : 0;
+  const status = total === 0 ? "Sem dados"
+    : maiorAloc > 70 ? "Concentrada"
+    : maiorAloc > 50 ? "Moderada"
+    : "Equilibrada";
+
+  let header = `
+    <div class="inv-header">
+      <div class="inv-patrimonio">
+        <div class="label">Patrimônio Investido Consolidado</div>
+        <div class="valor">${total ? fmt(total) : "R$ 0,00"}</div>
+        <div class="sub">${total ? classes.length + " classe(s) de ativos" : "Nenhum ativo disponível pela conexão"}</div>
+      </div>
+    </div>`;
+
+  let grid = "";
+  if (classes.length) {
+    grid = `<div class="inv-grid">` + classes.map(c => {
+      const aloc = total > 0 ? Math.round((c.total / total) * 100) : 0;
+      return `
+        <div class="inv-card">
+          <div class="inv-card-topo">
+            <div class="inv-icone" style="background:${c.cor}22">${c.icone}</div>
+            <div>
+              <div class="inv-titulo">${c.chave}</div>
+              <div class="inv-sub">${c.n} ativo(s)</div>
+            </div>
+            <div class="inv-badge" style="color:${c.cor};background:${c.cor}1a">${aloc}%</div>
+          </div>
+          <div class="inv-valor">${fmt(c.total)}</div>
+          <div class="inv-barra-linha">
+            <div class="inv-barra"><div class="fill" style="width:${Math.max(4, aloc)}%;background:${c.cor}"></div></div>
+            <div class="inv-aloc">${aloc}%</div>
+          </div>
+        </div>`;
+    }).join("") + `</div>`;
+  } else {
+    grid = `
+      <div class="painel">
+        <div class="aviso">ℹ️ Nenhum investimento disponível pela sua conexão. Seu banco pode não expor esse produto via Pluggy — a estrutura está pronta para quando houver dados.</div>
+      </div>`;
+  }
+
+  let dist = "";
+  if (classes.length) {
+    dist = `
+      <div class="inv-dist">
+        <div class="inv-dist-topo">
+          <div>
+            <h3>Distribuição da Carteira</h3>
+            <div class="desc">Alocação por classe de ativo</div>
+          </div>
+          <div class="inv-status">Status: ${status}</div>
+        </div>
+        <div class="inv-segmentada">
+          ${classes.map(c => {
+            const aloc = total > 0 ? Math.round((c.total / total) * 100) : 0;
+            return `<div class="seg" style="width:${aloc}%;background:${c.cor}"></div>`;
+          }).join("")}
+        </div>
+        <div class="inv-legenda">
+          ${classes.map(c => {
+            const aloc = total > 0 ? Math.round((c.total / total) * 100) : 0;
+            return `<div class="inv-leg-item"><span class="dot" style="background:${c.cor}"></span>${c.chave}<b>${fmt(c.total)}</b><span style="color:var(--texto2)">(${aloc}%)</span></div>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = header + grid + dist + renderInstituicoes(invInst) + `
+    <div class="inv-footer">🔒 Dados sincronizados do Pluggy via Open Finance Brasil</div>`;
+}
+
+// Tabela de instituições: mostra o montante INVESTIDO por banco
+function renderInstituicoes(invInst) {
+  const insts = invInst || [];
+  if (!insts.length) return "";
+  const total = insts.reduce((s, i) => s + (i.total || 0), 0);
+  if (total <= 0) return "";
+  return `
+    <div class="inv-inst">
+      <h3>Instituições</h3>
+      <div class="desc">Montante investido por banco</div>
+      ${insts.map(i => {
+        const pct = total > 0 ? Math.round((i.total / total) * 100) : 0;
+        return `
+        <div class="inv-inst-linha">
+          <div class="inv-inst-info">
+            <div class="nome">${i.instituicao}</div>
+            <div class="sub">${i.ativos} ${i.ativos > 1 ? "ativos" : "ativo"}</div>
+          </div>
+          <div class="inv-inst-barra"><div class="fill" style="width:${Math.max(4, pct)}%;background:#10b981"></div></div>
+          <div class="inv-inst-valor">
+            <div class="v">${fmt(i.total)}</div>
+            <div class="p">${pct}%</div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`;
+}
+
+// Troca de mês no seletor
+document.getElementById("seletorMes").addEventListener("change", async (e) => {
+  mesSelecionado = e.target.value;
+  if (!mesSelecionado) return;
+  await carregarCardsMes();
+});
+
+// Filtros da tabela de transações
+document.querySelectorAll(".tab").forEach((tab) => {
+  tab.addEventListener("click", async () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("ativo"));
+    tab.classList.add("ativo");
+    filtroAtual = tab.dataset.filtro;
+    const tx = await fetch("/api/transactions?limit=200").then(r => r.json());
+    document.getElementById("tabelaTodas").innerHTML = montarTabela(tx, filtroAtual);
+  });
+});
+
+document.getElementById("btnVerTodas").addEventListener("click", async () => {
+  txLimite = 50;
+  document.getElementById("btnVerTodas").style.display = "none";
+  const tx = await fetch("/api/transactions?limit=200").then(r => r.json());
+  document.getElementById("tabelaRecentes").innerHTML = montarTabela(tx.slice(0, txLimite), "todas");
+});
+
+document.getElementById("btnSync").addEventListener("click", async () => {
+  const btn = document.getElementById("btnSync");
+  btn.disabled = true; btn.textContent = "Sincronizando…";
+  await fetch("/api/sync", { method: "POST" });
+  location.reload();
+});
+
+carregarVisao();
+</script>
+</body>
+</html>
