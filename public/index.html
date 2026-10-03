@@ -329,17 +329,70 @@
     .inv-inst-valor { width: 106px; }
     .inv-inst-linha { gap: 8px; }
 
-    /* Barra de navegação inferior fixa */
+    /* Barra de navegação inferior — estilo refinado */
     .bottom-nav {
-      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
-      background: rgba(19,22,28,.97); backdrop-filter: blur(10px);
-      border-top: 1px solid var(--borda);
-      padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+      display: flex;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 70;
+      background: rgba(19, 22, 28, 0.92);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+      padding: 6px 6px calc(8px + env(safe-area-inset-bottom));
       justify-content: space-around;
+      align-items: stretch;
     }
     .bottom-nav .nav-item {
-      flex-direction: column; gap: 3px; padding: 5px 10px;
-      font-size: 11px; min-width: 58px; text-align: center; justify-content: center;
+      position: relative;
+      flex: 1;
+      flex-direction: column;
+      gap: 3px;
+      padding: 8px 2px 6px;
+      min-width: 0;
+      text-align: center;
+      justify-content: center;
+      border-radius: 14px;
+      color: var(--texto2);
+      font-size: 10.5px;
+      font-weight: 500;
+      transition: color .2s ease, background .2s ease, transform .15s ease;
+    }
+    .bottom-nav .nav-item:hover { background: transparent; }
+    .bottom-nav .nav-item:active { transform: scale(.93); }
+    .bottom-nav .nav-item .nav-emoji {
+      font-size: 21px;
+      line-height: 1;
+      filter: grayscale(1) opacity(.75);
+      transition: filter .2s ease, transform .2s ease;
+    }
+    .bottom-nav .nav-item span:last-child {
+      font-size: 10.5px;
+      line-height: 1.15;
+      letter-spacing: .01em;
+    }
+    .bottom-nav .nav-item.ativo {
+      color: var(--verde);
+      background: rgba(34, 197, 94, 0.10);
+      border-color: transparent;
+      font-weight: 700;
+    }
+    .bottom-nav .nav-item.ativo .nav-emoji {
+      filter: none;
+      transform: translateY(-1px);
+    }
+    .bottom-nav .nav-item.ativo::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--verde);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
     }
   }
 </style>
@@ -467,11 +520,11 @@
 
 <!-- Barra de navegação inferior (mobile) -->
 <nav class="bottom-nav">
-  <div class="nav-item ativo" data-alvo="visao">🏠<span>Início</span></div>
-  <div class="nav-item" data-alvo="transacoes">💳<span>Movimentos</span></div>
-  <div class="nav-item" data-alvo="faturas">🧾<span>Faturas</span></div>
-  <div class="nav-item" data-alvo="investimentos">📈<span>Investir</span></div>
-  <div class="nav-item" data-alvo="categorias">🏷️<span>Categorias</span></div>
+  <div class="nav-item ativo" data-alvo="visao"><span class="nav-emoji">🏠</span><span>Início</span></div>
+  <div class="nav-item" data-alvo="transacoes"><span class="nav-emoji">💳</span><span>Movimentos</span></div>
+  <div class="nav-item" data-alvo="faturas"><span class="nav-emoji">🧾</span><span>Faturas</span></div>
+  <div class="nav-item" data-alvo="investimentos"><span class="nav-emoji">📈</span><span>Investir</span></div>
+  <div class="nav-item" data-alvo="categorias"><span class="nav-emoji">🏷️</span><span>Categorias</span></div>
 </nav>
 
 <script>
