@@ -44,7 +44,8 @@
     margin-top: auto; background: var(--card); border: 1px solid var(--borda);
     border-radius: 12px; padding: 12px; display: flex; gap: 10px; align-items: center;
   }
-  .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px rgba(34,197,94,.7); }
+  .status-card.oculto { display: none; }
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px rgba(34,197,94,.7); flex-shrink: 0; }
   .status-titulo { font-size: 13px; font-weight: 600; }
   .status-sub { font-size: 12px; color: var(--texto2); margin-top: 2px; }
 
@@ -170,13 +171,70 @@
   .mini .value { font-size: 20px; font-weight: 700; }
   .mini .sub { color: var(--texto2); font-size: 12px; margin-top: 6px; }
 
-  .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  /* ===== Toolbar de transações (busca + período) ===== */
+  .tx-toolbar {
+    display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+  }
+  .tx-busca {
+    flex: 1; min-width: 220px;
+    display: flex; align-items: center; gap: 10px;
+    background: #1b1f28; border: 1px solid var(--borda);
+    border-radius: 12px; padding: 0 14px; height: 44px;
+    transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+  }
+  .tx-busca:hover { border-color: #2e3542; }
+  .tx-busca:focus-within {
+    border-color: var(--azul); background: #1e2430;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+  }
+  .tx-busca svg { width: 16px; height: 16px; color: var(--texto2); flex-shrink: 0; transition: color .18s ease; }
+  .tx-busca:focus-within svg { color: var(--azul); }
+  .tx-busca input {
+    flex: 1; min-width: 0; background: transparent; border: 0;
+    color: var(--texto); font-size: 13.5px; font-family: inherit; outline: none;
+  }
+  .tx-busca input::placeholder { color: var(--texto3); }
+  .tx-busca input::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+  /* Seletor de período: pill com ícone de calendário */
+  .tx-periodo {
+    position: relative; display: inline-flex; align-items: center; gap: 9px;
+    background: #1b1f28; border: 1px solid var(--borda);
+    border-radius: 12px; padding: 0 12px 0 14px; height: 44px;
+    transition: border-color .18s ease, background .18s ease;
+  }
+  .tx-periodo:hover { border-color: #2e3542; }
+  .tx-periodo:focus-within { border-color: var(--azul); background: #1e2430; }
+  .tx-periodo svg { width: 15px; height: 15px; color: var(--texto2); flex-shrink: 0; }
+  .tx-periodo select {
+    border: 0; background: transparent; color: var(--texto);
+    font-size: 13px; font-weight: 600; font-family: inherit;
+    padding: 10px 22px 10px 0; cursor: pointer; height: 100%;
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a93a6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    background-size: 12px;
+  }
+  .tx-periodo select:focus { outline: none; }
+  .tx-periodo select option { background: var(--card); color: var(--texto); }
+
+  /* Abas em pílula */
+  .tabs {
+    display: inline-flex; gap: 4px; margin-bottom: 16px;
+    background: #1b1f28; border: 1px solid var(--borda);
+    border-radius: 12px; padding: 4px;
+  }
   .tab {
-    padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
-    color: var(--texto2); background: transparent; border: 1px solid transparent; font-family: inherit;
+    padding: 8px 18px; border-radius: 9px; cursor: pointer; font-size: 13px;
+    color: var(--texto2); background: transparent; border: 0; font-family: inherit;
+    font-weight: 500; transition: color .15s ease, background .15s ease;
   }
   .tab:hover { color: var(--texto); }
-  .tab.ativo { background: #1e2430; color: #fff; font-weight: 600; border-color: #2a3140; }
+  .tab.ativo {
+    background: #2a3140; color: #fff; font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  }
   table { width: 100%; border-collapse: collapse; }
   thead th {
     text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
@@ -293,6 +351,11 @@
   /* Evolução do patrimônio: altura fixa e enxuta */
   .wealth-box { position: relative; height: 180px; }
   .wealth-box canvas { width: 100% !important; height: 100% !important; }
+  .wealth-vazio {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--texto2); font-size: 13px; padding: 22px 4px;
+  }
+  .wealth-vazio svg { width: 16px; height: 16px; flex-shrink: 0; }
 
   .inv-footer {
     background: rgba(255,255,255,.02);
@@ -331,6 +394,15 @@
     padding: 14px 16px; color: var(--texto2); font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
   }
   .aviso svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Estado de erro com retry */
+  .erro-box {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(244,63,94,.08); border: 1px solid rgba(244,63,94,.25);
+    border-radius: 12px; padding: 14px 16px; color: var(--texto2); font-size: 13px;
+  }
+  .erro-box svg { width: 16px; height: 16px; color: var(--vermelho); flex-shrink: 0; }
+  .erro-box .btn-mini { margin-left: auto; }
 
   /* ===== Modal de orçamento ===== */
   .modal-fundo {
@@ -386,6 +458,7 @@
     }
     .sidebar nav { display: none; }
     .sidebar .logo { padding: 0; }
+    .status-card { display: none; }
 
     .conteudo { padding: 16px 14px 96px; }
 
@@ -414,7 +487,11 @@
     }
     #tabelaRecentes table, #tabelaTodas table, #tabelaParcelas table { min-width: 560px; }
 
-    .tabs { overflow-x: auto; flex-wrap: nowrap; }
+    .tx-toolbar { flex-direction: column; align-items: stretch; }
+    .tx-periodo { width: 100%; }
+    .tx-periodo select { flex: 1; }
+    .tabs { display: flex; width: 100%; }
+    .tab { flex: 1; text-align: center; }
 
     .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .inv-header { padding: 16px 18px; }
@@ -542,11 +619,11 @@
         <span>Categorias</span>
       </div>
     </nav>
-    <div class="status-card">
+    <div class="status-card oculto" id="statusCard">
       <div class="status-dot"></div>
       <div>
-        <div class="status-titulo" id="statusTitulo">Sincronização ativa</div>
-        <div class="status-sub" id="statusSub">Dados do Pluggy • diária às 3h</div>
+        <div class="status-titulo" id="statusTitulo">Consentimento</div>
+        <div class="status-sub" id="statusSub"></div>
       </div>
     </div>
   </aside>
@@ -562,7 +639,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           <span id="btnSyncTxt">Sincronizar agora</span>
         </button>
-        <div class="perfil"><div class="avatar">G</div><div class="pnome">Gabriel</div></div>
+        <div class="perfil"><div class="avatar" id="perfilInicial">U</div><div class="pnome" id="perfilNome">Usuário</div></div>
       </div>
     </header>
 
@@ -603,6 +680,21 @@
     <section class="secao" id="transacoes">
       <div class="painel">
         <div class="painel-topo"><h2>Todas as transações</h2></div>
+        <div class="tx-toolbar">
+          <div class="tx-busca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input id="txBusca" type="search" placeholder="Buscar por descrição, categoria ou valor…" autocomplete="off">
+          </div>
+          <div class="tx-periodo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+            <select id="txPeriodo">
+              <option value="tudo">Todo o período</option>
+              <option value="mes">Mês atual</option>
+              <option value="3m">Últimos 3 meses</option>
+              <option value="ano">Este ano</option>
+            </select>
+          </div>
+        </div>
         <div class="tabs">
           <div class="tab ativo" data-filtro="todas">Todas</div>
           <div class="tab" data-filtro="entradas">Entradas</div>
@@ -710,6 +802,7 @@ const P = {
   lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
   flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
 };
 const svg = (paths, size = 16) =>
   `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
@@ -825,6 +918,10 @@ function linhaVariacao(varPct, invertido, mesAnt) {
   const ref = mesAnt ? "vs " + mesNome(mesAnt).split(" de ")[0] : "vs mês anterior";
   return `<div class="variacao ${bom ? "positivo" : "negativo"}">${seta} ${pctTxt(varPct)} ${ref}</div>`;
 }
+// Bloco de erro padronizado com botão de retry
+function blocoErro(msg) {
+  return `<div class="erro-box">${svg(P.info, 16)}<span>${msg}</span><button class="btn-mini" onclick="carregarVisao()">Tentar de novo</button></div>`;
+}
 
 // Contadores animados: os valores "sobem" de 0 até o número real
 function animarContadores() {
@@ -852,7 +949,6 @@ document.querySelectorAll(".nav-item").forEach((el) => {
     document.getElementById(alvo).classList.add("ativa");
     document.getElementById("tituloPagina").textContent = TITULOS[alvo] || alvo;
     window.scrollTo({ top: 0, behavior: "smooth" });
-    // Gráficos de investimentos renderizam na 1ª abertura da aba (evita canvas em seção oculta)
     if (alvo === "investimentos") { renderGraficoDist(); renderGraficoPatrimonio(); }
   });
 });
@@ -913,6 +1009,9 @@ let graficoSpark = null;
 let wealthCache = [];
 let wealthMensal = [];
 let distCache = [];
+let todasTransacoes = [];
+let txBusca = "";
+let txPeriodo = "tudo";
 
 function montarSeletor(monthlyAno) {
   const sel = document.getElementById("seletorMes");
@@ -929,7 +1028,7 @@ function montarSeletor(monthlyAno) {
   sel.value = mesSelecionado;
 }
 
-// ===== Fluxo Mensal: entradas vs saídas com médias tracejadas, mês destacado e tooltip com variação % =====
+// ===== Fluxo Mensal =====
 function renderFluxo() {
   if (!dadosMensais.length) return;
   const anoAtual = new Date().getFullYear();
@@ -987,20 +1086,26 @@ function renderFluxo() {
 
 async function carregarVisao() {
   try {
-    // Skeleton enquanto carrega
     document.getElementById("cards").innerHTML =
       Array(4).fill(`<div class="card"><div class="sk sk-l"></div><div class="sk sk-v"></div><div class="sk sk-s"></div></div>`).join("");
 
     const anoAtual = new Date().getFullYear();
 
-    const [monthlyAno, melhores, saldoRes, invRes, invInst, wealthHist] = await Promise.all([
+    const [monthlyAno, melhores, saldoRes, invRes, invInst, wealthHist, perfil] = await Promise.all([
       fetch(`/api/monthly?ano=${anoAtual}`).then(r => r.json()),
       fetch("/api/melhores").then(r => r.json()),
       fetch("/api/saldo").then(r => r.json()),
       fetch("/api/investimentos").then(r => r.json()),
       fetch("/api/investimentos/instituicoes").then(r => r.json()),
-      fetch("/api/wealth").then(r => r.json()).catch(() => []),
+      fetch("/api/wealth").then(r => r.json()).catch(() => null),
+      fetch("/api/perfil").then(r => r.json()).catch(() => null),
     ]);
+
+    // Perfil (nome + avatar por instância)
+    if (perfil && perfil.nome) {
+      document.getElementById("perfilNome").textContent = perfil.nome;
+      document.getElementById("perfilInicial").textContent = perfil.inicial || perfil.nome.charAt(0).toUpperCase();
+    }
 
     dadosMensais = monthlyAno;
 
@@ -1038,12 +1143,14 @@ async function carregarVisao() {
       await carregarCategorias(monthlyAno[0].mes);
     }
 
-    const tx = await fetch(`/api/transactions?limit=200`).then(r => r.json());
-    document.getElementById("tabelaRecentes").innerHTML = montarTabela(tx.slice(0, txLimite), "todas");
-    document.getElementById("tabelaTodas").innerHTML = montarTabela(tx, filtroAtual);
-    document.getElementById("btnVerTodas").style.display = tx.length > txLimite ? "" : "none";
+    // Transações: carrega uma vez e filtra no cliente (busca + período)
+    const tx = await fetch(`/api/transactions?limit=500`).then(r => r.json());
+    todasTransacoes = Array.isArray(tx) ? tx : [];
+    document.getElementById("tabelaRecentes").innerHTML = montarTabela(todasTransacoes.slice(0, txLimite), "todas");
+    renderTabelaTodas();
+    document.getElementById("btnVerTodas").style.display = todasTransacoes.length > txLimite ? "" : "none";
 
-    renderInvestimentos(invRes, invInst, wealthHist);
+    renderInvestimentos(invRes, invInst, wealthHist || []);
     carregarFaturas();
     carregarOrcamento();
 
@@ -1058,6 +1165,8 @@ async function carregarVisao() {
       if (info.consentExpiresAt) {
         const dias = Math.floor((new Date(info.consentExpiresAt) - Date.now()) / 86400000);
         if (dias < 60) {
+          const card = document.getElementById("statusCard");
+          card.classList.remove("oculto");
           document.getElementById("statusTitulo").textContent = "Consentimento expira em " + dias + " dias";
           document.getElementById("statusTitulo").style.color = "#fbbf24";
           document.getElementById("statusSub").textContent = "Renove no dashboard do Pluggy";
@@ -1065,9 +1174,34 @@ async function carregarVisao() {
       }
     } catch (e) { /* segue sem metadados */ }
   } catch (err) {
-    document.getElementById("cards").innerHTML =
-      `<div class="card vazio">Erro ao carregar: ${err.message}. Confira se o servidor está rodando.</div>`;
+    document.getElementById("cards").innerHTML = blocoErro("Erro ao carregar: " + err.message + ". Confira se o servidor está rodando.");
   }
+}
+
+// Filtra as transações por tipo + período + busca e renderiza
+function renderTabelaTodas() {
+  let lista = todasTransacoes.slice();
+  if (filtroAtual === "entradas") lista = lista.filter(t => t.amount > 0);
+  else if (filtroAtual === "saidas") lista = lista.filter(t => t.amount < 0);
+
+  if (txPeriodo !== "tudo") {
+    const agora = new Date();
+    let inicio = null;
+    if (txPeriodo === "mes") inicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    else if (txPeriodo === "3m") inicio = new Date(agora.getFullYear(), agora.getMonth() - 2, 1);
+    else if (txPeriodo === "ano") inicio = new Date(agora.getFullYear(), 0, 1);
+    if (inicio) lista = lista.filter(t => { const d = new Date(t.date); return !isNaN(d) && d >= inicio; });
+  }
+
+  if (txBusca) {
+    const q = txBusca.toLowerCase();
+    lista = lista.filter(t =>
+      (t.merchant || "").toLowerCase().includes(q) ||
+      (t.description || "").toLowerCase().includes(q) ||
+      (t.category || "").toLowerCase().includes(q));
+  }
+
+  document.getElementById("tabelaTodas").innerHTML = montarTabela(lista, "todas");
 }
 
 async function carregarCardsMes() {
@@ -1075,7 +1209,6 @@ async function carregarCardsMes() {
   const saldoRes = await fetch("/api/saldo").then(r => r.json());
   const invRes = await fetch("/api/investimentos").then(r => r.json());
 
-  // Variação vs mês anterior: ordena os meses antes de comparar
   const ordenado = [...dadosMensais].sort((a, b) => a.mes.localeCompare(b.mes));
   const idx = ordenado.findIndex(m => m.mes === mesSelecionado);
   const mesAnterior = idx > 0 ? ordenado[idx - 1] : null;
@@ -1117,7 +1250,6 @@ async function carregarCardsMes() {
 
     animarContadores();
 
-    // Mini gráfico de poupança mensal no card hero
     const sparkCanvas = document.getElementById("sparkSaldo");
     if (sparkCanvas && dadosMensais.length) {
       const serie = ordenado.map(m => (m.ganhos || 0) - (m.gastos || 0));
@@ -1305,13 +1437,12 @@ document.getElementById("orcSalvar").addEventListener("click", async () => {
 
 // ===== Faturas =====
 async function carregarFaturas() {
+  const area = document.getElementById("faturasCards");
   try {
     const [fats, parcs] = await Promise.all([
       fetch("/api/faturas").then(r => r.json()),
       fetch("/api/parcelas").then(r => r.json()),
     ]);
-
-    const area = document.getElementById("faturasCards");
 
     if (!fats.length) {
       area.innerHTML = `<div class="card">
@@ -1339,8 +1470,7 @@ async function carregarFaturas() {
 
     document.getElementById("tabelaParcelas").innerHTML = montarTabelaParcelas(parcs);
   } catch (err) {
-    document.getElementById("faturasCards").innerHTML =
-      `<div class="card vazio">Erro ao carregar faturas: ${err.message}</div>`;
+    area.innerHTML = blocoErro("Não foi possível carregar as faturas.");
   }
 }
 
@@ -1351,11 +1481,9 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
 
   wealthCache = wealthHist || [];
 
-  // Agrega o histórico por mês: como os snapshots vêm em ordem crescente,
-  // a última atribuição de cada chave fica com o valor mais recente do mês
   const porMes = {};
   for (const w of wealthCache) {
-    const chave = (w.date || "").slice(0, 7); // YYYY-MM
+    const chave = (w.date || "").slice(0, 7);
     if (chave) porMes[chave] = w;
   }
   wealthMensal = Object.keys(porMes).sort().map((k) => ({ mes: k, ...porMes[k] }));
@@ -1413,7 +1541,6 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
       </div>`;
   }
 
-  // Distribuição da carteira: pizza em caixa fixa + legenda HTML ao lado (texto nunca corta)
   let dist = "";
   if (classes.length) {
     dist = `
@@ -1444,7 +1571,7 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
       </div>`;
   }
 
-  // Evolução do patrimônio (aparece a partir do 2º snapshot)
+  // Evolução do patrimônio: gráfico quando há 2+ pontos; mensagem enquanto coleta
   let wealthHtml = "";
   if (wealthCache.length >= 2) {
     wealthHtml = `
@@ -1453,12 +1580,18 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
         <div class="desc">Saldo + investimentos ao longo do tempo</div>
         <div class="wealth-box"><canvas id="graficoPatrimonio"></canvas></div>
       </div>`;
+  } else {
+    wealthHtml = `
+      <div class="inv-dist">
+        <h3>Evolução do Patrimônio</h3>
+        <div class="desc">Saldo + investimentos ao longo do tempo</div>
+        <div class="wealth-vazio">${svg(P.clock, 16)} Coletando histórico — o gráfico aparece após o segundo registro de sincronização.</div>
+      </div>`;
   }
 
   container.innerHTML = header + grid + dist + wealthHtml + renderInstituicoes(invInst) + `
     <div class="inv-footer">${svg(P.lock, 14)} Dados sincronizados do Pluggy via Open Finance Brasil</div>`;
 
-  // Se o usuário já estiver na aba Investimentos, renderiza os gráficos agora
   if (document.getElementById("investimentos").classList.contains("ativa")) {
     renderGraficoDist();
     renderGraficoPatrimonio();
@@ -1509,7 +1642,6 @@ function renderGraficoPatrimonio() {
   if (!canvas || wealthCache.length < 2) return;
   if (graficoPatrimonio) graficoPatrimonio.destroy();
 
-  // Mensal quando houver 2+ meses; dentro de um único mês, mostra os snapshots dia a dia
   const usarMensal = wealthMensal.length >= 2;
   const serie = usarMensal ? wealthMensal : wealthCache;
   const labels = usarMensal
@@ -1584,26 +1716,32 @@ function renderInstituicoes(invInst) {
 document.getElementById("seletorMes").addEventListener("change", async (e) => {
   mesSelecionado = e.target.value;
   if (!mesSelecionado) return;
-  renderFluxo(); // atualiza o destaque do mês no gráfico
+  renderFluxo();
   await carregarCardsMes();
 });
 
-// Filtros da tabela de transações
+// Filtros da tabela de transações (tipo + busca + período)
 document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", async () => {
+  tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("ativo"));
     tab.classList.add("ativo");
     filtroAtual = tab.dataset.filtro;
-    const tx = await fetch("/api/transactions?limit=200").then(r => r.json());
-    document.getElementById("tabelaTodas").innerHTML = montarTabela(tx, filtroAtual);
+    renderTabelaTodas();
   });
 });
+document.getElementById("txBusca").addEventListener("input", (e) => {
+  txBusca = e.target.value.trim();
+  renderTabelaTodas();
+});
+document.getElementById("txPeriodo").addEventListener("change", (e) => {
+  txPeriodo = e.target.value;
+  renderTabelaTodas();
+});
 
-document.getElementById("btnVerTodas").addEventListener("click", async () => {
-  txLimite = 50;
-  document.getElementById("btnVerTodas").style.display = "none";
-  const tx = await fetch("/api/transactions?limit=200").then(r => r.json());
-  document.getElementById("tabelaRecentes").innerHTML = montarTabela(tx.slice(0, txLimite), "todas");
+// "Ver todas" leva para a aba Transações
+document.getElementById("btnVerTodas").addEventListener("click", () => {
+  const navTx = document.querySelector('.nav-item[data-alvo="transacoes"]');
+  if (navTx) navTx.click();
 });
 
 document.getElementById("btnSync").addEventListener("click", async () => {
