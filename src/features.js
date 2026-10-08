@@ -1,16 +1,12 @@
 // ============================================================
 // src/features.js
-// Features adicionais: Orçamento por categoria + Histórico de patrimônio
+// Features: Orçamento por categoria + Histórico de patrimônio
 // Uso no server.js:
-//   const registerFeatures = require("./features");
-//   registerFeatures(app, db, {
-//     getSaldoTotal: async () => ...,
-//     getInvestimentosTotal: async () => ...,
-//     onSync: funcaoDeSyncAtual
-//   });
+//   const registrarSnapshot = require("./features")(app, db, { saldoTotal, investimentos });
+//   // chame await registrarSnapshot() ao final de cada sincronização
 // ============================================================
 
-module.exports = function registerFeatures(app, db, helpers) {
+module.exports = function registerFeatures(app, db, helpers = {}) {
   // ---- Tabelas (criadas automaticamente) ----
   db.exec(`
     CREATE TABLE IF NOT EXISTS budgets (
@@ -29,14 +25,14 @@ module.exports = function registerFeatures(app, db, helpers) {
 
   // ===== ORÇAMENTO POR CATEGORIA =====
 
-  // GET /api/budgets?mes=YYYY-MM -> lista orçamentos com gasto atual do mês
+  // GET /api/budgets?mes=YYYY-MM -> orçamentos com o gasto atual do mês
   app.get("/api/budgets", async (req, reply) => {
     const mes = req.query.mes;
     const budgets = db.prepare("SELECT category, limit_value FROM budgets").all();
     const limites = {};
     for (const b of budgets) limites[b.category] = b.limit_value;
 
-    let gastoPorCat = {};
+    const gastoPorCat = {};
     if (mes) {
       const rows = db.prepare(`
         SELECT category, SUM(ABS(amount)) as total
@@ -47,7 +43,7 @@ module.exports = function registerFeatures(app, db, helpers) {
       for (const r of rows) gastoPorCat[r.category] = r.total;
     }
 
-    return Object.keys(limites).map(cat => {
+    return Object.keys(limites).map((cat) => {
       const spent = gastoPorCat[cat] || 0;
       const limit = limites[cat];
       return {
@@ -62,8 +58,9 @@ module.exports = function registerFeatures(app, db, helpers) {
 
   // POST /api/budgets -> cria/atualiza um orçamento
   app.post("/api/budgets", async (req, reply) => {
-    const { category, limit } = req.body || {};
-    if (!category || typeof limit !== "number" || limit < 0) {
+    const category = ((req.body && req.body.category) || "").trim();
+    const limit = Number(req.body && req.body.limit);
+    if (!category || !Number.isFinite(limit) || limit < 0) {
       return reply.code(400).send({ error: "category e limit (número >= 0) são obrigatórios" });
     }
     db.prepare(`
@@ -84,14 +81,14 @@ module.exports = function registerFeatures(app, db, helpers) {
 
   // ===== HISTÓRICO DE PATRIMÔNIO =====
 
-  // GET /api/wealth -> histórico de patrimônio (saldo + investimentos)
-  app.get("/api/wealth", async (req, reply) => {
+  // GET /api/wealth -> evolução de saldo + investimentos ao longo do tempo
+  app.get("/api/wealth", async () => {
     const rows = db.prepare(`
       SELECT recorded_at, saldo_total, investimentos, patrimonio
       FROM wealth_history
       ORDER BY recorded_at ASC
     `).all();
-    return rows.map(r => ({
+    return rows.map((r) => ({
       date: r.recorded_at,
       saldo: r.saldo_total,
       investimentos: r.investimentos,
@@ -99,22 +96,33 @@ module.exports = function registerFeatures(app, db, helpers) {
     }));
   });
 
-  // Grava um snapshot de patrimônio ao fim de cada sync
-  if (helpers && typeof helpers.onSync === "function") {
-    const original = helpers.onSync;
-    helpers.onSync = async function (...args) {
-      const res = await original.apply(this, args);
-      try {
-        const saldo = helpers.getSaldoTotal ? await helpers.getSaldoTotal() : 0;
-        const inv = helpers.getInvestimentosTotal ? await helpers.getInvestimentosTotal() : 0;
-        db.prepare(`
-          INSERT INTO wealth_history (recorded_at, saldo_total, investimentos, patrimonio)
-          VALUES (datetime('now'), ?, ?, ?)
-        `).run(saldo, inv, saldo + inv);
-      } catch (e) {
-        console.error("Erro ao gravar snapshot de patrimônio:", e.message);
+  // Grava um snapshot de patrimônio (chamado ao final de cada sync).
+  // Evita duplicados: no máximo 1 snapshot a cada 30 minutos.
+  return async function registrarSnapshot() {
+    try {
+      const ultimo = db.prepare("SELECT recorded_at FROM wealth_history ORDER BY recorded_at DESC LIMIT 1").get();
+      if (ultimo) {
+        const decorrido = Date.now() - new Date(ultimo.recorded_at.replace(" ", "T") + "Z").getTime();
+        if (decorrido < 30 * 60 * 1000) return;
       }
-      return res;
-    };
-  }
+
+      let saldo = 0;
+      if (typeof helpers.saldoTotal === "function") {
+        const s = await Promise.resolve(helpers.saldoTotal());
+        saldo = s && typeof s === "object" ? (s.total || 0) : Number(s) || 0;
+      }
+      let inv = 0;
+      if (typeof helpers.investimentos === "function") {
+        const lista = await Promise.resolve(helpers.investimentos());
+        inv = Array.isArray(lista) ? lista.reduce((a, i) => a + (i.balance || 0), 0) : 0;
+      }
+
+      db.prepare(`
+        INSERT INTO wealth_history (recorded_at, saldo_total, investimentos, patrimonio)
+        VALUES (datetime('now'), ?, ?, ?)
+      `).run(saldo, inv, saldo + inv);
+    } catch (e) {
+      console.error("Erro ao gravar snapshot de patrimônio:", e.message);
+    }
+  };
 };
