@@ -533,6 +533,7 @@ const MESES_CURTOS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtCompact = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 });
 const PALETA = ["#f43f5e", "#f472b6", "#a78bfa", "#818cf8", "#38bdf8", "#34d399", "#fbbf24", "#fb923c", "#22d3ee", "#fda4af"];
+// Paleta de categorias SEM vermelho/rosa: reserva o vermelho apenas para valores negativos (saídas)
 const PALETA_CAT = ["#34d399", "#2dd4bf", "#38bdf8", "#818cf8", "#a78bfa", "#fbbf24", "#fb923c", "#22d3ee", "#a3e635", "#94a3b8"];
 const ICONE_CAT = { "Moradia":"🏠", "Alimentação":"🍔", "Transporte":"🚗", "Assinaturas":"🎬", "Saúde":"💊", "Lazer":"🍿", "Educação":"🎓", "Compras":"🛍️", "Serviços":"🛠️", "Transferências":"🔄", "Outros":"📌" };
 const mesesLongos = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
@@ -607,6 +608,7 @@ function variacao(atual, anterior) {
   if (!anterior) return null;
   return ((atual - anterior) / anterior) * 100;
 }
+// Linha de variação para os cards. invertido=true quando "subir é ruim" (saídas).
 function linhaVariacao(varPct, invertido) {
   if (varPct === null || varPct === undefined || !isFinite(varPct)) return "";
   const bom = invertido ? varPct < 0 : varPct > 0;
@@ -614,6 +616,7 @@ function linhaVariacao(varPct, invertido) {
   return `<div class="variacao ${bom ? "positivo" : "negativo"}">${seta} ${pctTxt(varPct)} vs mês anterior</div>`;
 }
 
+// Navegação entre seções (menu lateral + barra inferior)
 document.querySelectorAll(".nav-item").forEach((el) => {
   el.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("ativo"));
@@ -621,9 +624,12 @@ document.querySelectorAll(".nav-item").forEach((el) => {
     document.querySelectorAll(".secao").forEach(s => s.classList.remove("ativa"));
     document.getElementById(el.dataset.alvo).classList.add("ativa");
     document.getElementById("tituloPagina").textContent = el.textContent.replace(/[🏠💳🧾📈🏷️]/g, "").trim();
+    // Gráfico de patrimônio renderiza na 1ª abertura da aba (evita canvas em seção oculta)
+    if (el.dataset.alvo === "investimentos") renderGraficoPatrimonio();
   });
 });
 
+// Tabela de transações (reutilizável)
 function montarTabela(tx, filtro) {
   const lista = filtro === "entradas" ? tx.filter(t => t.amount > 0)
               : filtro === "saidas" ? tx.filter(t => t.amount < 0) : tx;
@@ -648,6 +654,7 @@ function montarTabela(tx, filtro) {
   </table>`;
 }
 
+// Tabela de compras parceladas
 function montarTabelaParcelas(parcs) {
   if (!parcs.length) return `<div class="vazio">Nenhuma compra parcelada em aberto.</div>`;
   return `<table>
@@ -675,7 +682,11 @@ let mesSelecionado = null;
 let dadosMensais = [];
 let graficoFluxo = null;
 let graficoRosca = null;
+let graficoPatrimonio = null;
+let wealthCache = [];
+let patrimonioRenderado = false;
 
+// Monta o seletor de meses do ano vigente (com dados) e define o mês padrão
 function montarSeletor(monthlyAno) {
   const sel = document.getElementById("seletorMes");
   const mesesComDados = monthlyAno.map(m => m.mes).sort();
@@ -695,12 +706,13 @@ async function carregarVisao() {
   try {
     const anoAtual = new Date().getFullYear();
 
-    const [monthlyAno, melhores, saldoRes, invRes, invInst] = await Promise.all([
+    const [monthlyAno, melhores, saldoRes, invRes, invInst, wealthHist] = await Promise.all([
       fetch(`/api/monthly?ano=${anoAtual}`).then(r => r.json()),
       fetch("/api/melhores").then(r => r.json()),
       fetch("/api/saldo").then(r => r.json()),
       fetch("/api/investimentos").then(r => r.json()),
       fetch("/api/investimentos/instituicoes").then(r => r.json()),
+      fetch("/api/wealth").then(r => r.json()).catch(() => []),
     ]);
 
     dadosMensais = monthlyAno;
@@ -755,7 +767,7 @@ async function carregarVisao() {
     document.getElementById("tabelaTodas").innerHTML = montarTabela(tx, filtroAtual);
     document.getElementById("btnVerTodas").style.display = tx.length > txLimite ? "" : "none";
 
-    renderInvestimentos(invRes, invInst);
+    renderInvestimentos(invRes, invInst, wealthHist);
     carregarFaturas();
     carregarOrcamento();
 
@@ -787,6 +799,7 @@ async function carregarCardsMes() {
   const saldoRes = await fetch("/api/saldo").then(r => r.json());
   const invRes = await fetch("/api/investimentos").then(r => r.json());
 
+  // Variação vs mês anterior (a partir dos dados mensais do ano)
   const idx = dadosMensais.findIndex(m => m.mes === mesSelecionado);
   const mesAnterior = idx > 0 ? dadosMensais[idx - 1] : null;
   const varGanhos = mesAnterior && mesAnterior.ganhos ? variacao(insights.ganhos, mesAnterior.ganhos) : null;
@@ -856,6 +869,7 @@ async function carregarCardsMes() {
   document.getElementById("descRosca").textContent = "Despesas de " + mesNome(mesSelecionado) + " por categoria";
 }
 
+// Página Categorias: independente do seletor de mês (mostra o mês mais recente)
 async function carregarCategorias(mes) {
   const rank = await fetch(`/api/ranking/${mes}`).then(r => r.json());
   const catLista = document.getElementById("categoriasLista");
@@ -967,9 +981,11 @@ async function carregarFaturas() {
 }
 
 // ===== Investimentos =====
-function renderInvestimentos(invRes, invInst) {
+function renderInvestimentos(invRes, invInst, wealthHist = []) {
   const container = document.getElementById("invConteudo");
   const total = invRes.reduce((s, x) => s + (x.balance || 0), 0);
+
+  wealthCache = wealthHist || [];
 
   const grupos = {};
   for (const inv of invRes) {
@@ -1049,10 +1065,54 @@ function renderInvestimentos(invRes, invInst) {
       </div>`;
   }
 
-  container.innerHTML = header + grid + dist + renderInstituicoes(invInst) + `
+  // Evolução do patrimônio (aparece a partir do 2º snapshot)
+  let wealthHtml = "";
+  if (wealthCache.length >= 2) {
+    wealthHtml = `
+      <div class="inv-dist">
+        <h3>Evolução do Patrimônio</h3>
+        <div class="desc">Saldo + investimentos ao longo do tempo</div>
+        <canvas id="graficoPatrimonio" height="220"></canvas>
+      </div>`;
+  }
+
+  container.innerHTML = header + grid + dist + wealthHtml + renderInstituicoes(invInst) + `
     <div class="inv-footer">🔒 Dados sincronizados do Pluggy via Open Finance Brasil</div>`;
+
+  // Se o usuário já estiver na aba Investimentos, renderiza o gráfico agora
+  if (document.getElementById("investimentos").classList.contains("ativa")) {
+    renderGraficoPatrimonio();
+  }
 }
 
+// Gráfico de evolução do patrimônio (renderiza na 1ª abertura da aba)
+function renderGraficoPatrimonio() {
+  if (patrimonioRenderado || wealthCache.length < 2) return;
+  const canvas = document.getElementById("graficoPatrimonio");
+  if (!canvas) return;
+  if (graficoPatrimonio) graficoPatrimonio.destroy();
+  graficoPatrimonio = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: wealthCache.map(w => (w.date || "").slice(0, 10).split("-").reverse().join("/")),
+      datasets: [
+        { label: "Patrimônio total", data: wealthCache.map(w => w.patrimonio), borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,.15)", fill: true, tension: .3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2 },
+        { label: "Investimentos", data: wealthCache.map(w => w.investimentos), borderColor: "#38bdf8", backgroundColor: "rgba(56,189,248,.10)", fill: true, tension: .3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2 },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: "#9ca3af", usePointStyle: true, pointStyle: "circle", padding: 14 } } },
+      scales: {
+        x: { ticks: { color: "#6b7280", maxTicksLimit: 6 }, grid: { color: "rgba(255,255,255,.04)" } },
+        y: { ticks: { color: "#6b7280", callback: v => "R$ " + v }, grid: { color: "rgba(255,255,255,.04)" } },
+      },
+    },
+  });
+  patrimonioRenderado = true;
+}
+
+// Tabela de instituições: mostra o montante INVESTIDO por banco
 function renderInstituicoes(invInst) {
   const insts = invInst || [];
   if (!insts.length) return "";
@@ -1080,12 +1140,14 @@ function renderInstituicoes(invInst) {
     </div>`;
 }
 
+// Troca de mês no seletor (disponível apenas na página principal)
 document.getElementById("seletorMes").addEventListener("change", async (e) => {
   mesSelecionado = e.target.value;
   if (!mesSelecionado) return;
   await carregarCardsMes();
 });
 
+// Filtros da tabela de transações
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", async () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("ativo"));
