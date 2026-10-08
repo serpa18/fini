@@ -6,6 +6,8 @@ const cron = require("node-cron");
 const fastifyStatic = require("@fastify/static");
 const { sync } = require("./sync");
 const { monthly, ranking, assinaturas, insights, melhores, saldoTotal, transacoesRecentes, investimentos, investimentosPorInstituicao, faturas, parcelas, syncInfo } = require("./analyze");
+const db = require("./db");
+const registerFeatures = require("./features");
 
 const app = Fastify();
 app.register(cors, { origin: true });
@@ -29,9 +31,13 @@ app.get("/api/parcelas", () => parcelas());
 app.get("/api/syncinfo", () => syncInfo());
 app.post("/api/sync", async () => { await sync(); return { ok: true }; });
 
+// ===== Features: orçamento por categoria + histórico de patrimônio =====
+const registrarSnapshot = registerFeatures(app, db, { saldoTotal, investimentos });
+
 async function runSync() {
   try {
     await sync();
+    await registrarSnapshot(); // grava o snapshot de patrimônio após cada sync
   } catch (err) {
     console.error("Erro na sincronização:", err.message);
   }
@@ -40,21 +46,6 @@ async function runSync() {
 runSync();
 cron.schedule("0 3 * * *", runSync);
 
-app.listen({ port: process.env.PORT || 8181, host: "0.0.0.0" })
-  .then(() => console.log("Fini rodando na porta 8181"));
-
-// ===== Features adicionais: orçamento + histórico de patrimônio =====
-const registerFeatures = require("./features");
-registerFeatures(app, db, {
-  getSaldoTotal: async () => {
-    // Soma dos saldos das contas correntes (mesma lógica do /api/saldo)
-    const row = db.prepare("SELECT SUM(balance) as t FROM accounts WHERE type IN ('CHECKING','SAVINGS')").get();
-    return row?.t || 0;
-  },
-  getInvestimentosTotal: async () => {
-    // Soma dos saldos de investimentos (mesma lógica do /api/investimentos)
-    const row = db.prepare("SELECT SUM(balance) as t FROM investments").get();
-    return row?.t || 0;
-  },
-  onSync: funcaoSyncAtual, // a função que já roda a sincronização no seu server.js
-});
+const porta = process.env.PORT || 8181;
+app.listen({ port: porta, host: "0.0.0.0" })
+  .then(() => console.log(`Fini rodando na porta ${porta}`));
