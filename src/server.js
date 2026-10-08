@@ -31,6 +31,15 @@ app.get("/api/parcelas", () => parcelas());
 app.get("/api/syncinfo", () => syncInfo());
 app.post("/api/sync", async () => { await sync(); return { ok: true }; });
 
+// ===== Perfil: nome e avatar por instância (variáveis de ambiente) =====
+app.get("/api/perfil", () => {
+  const nome = (process.env.APP_USER_NAME || "Usuário").trim();
+  return {
+    nome,
+    inicial: nome.charAt(0).toUpperCase() || "U",
+  };
+});
+
 // ===== Features: orçamento por categoria + histórico de patrimônio =====
 const registrarSnapshot = registerFeatures(app, db, { saldoTotal, investimentos });
 
