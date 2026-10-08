@@ -266,6 +266,44 @@
     background: #1a1f2b; border: 1px solid #2a3140; border-radius: 12px;
     padding: 14px 16px; color: var(--texto2); font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
   }
+
+  /* ===== Modal de orçamento ===== */
+  .modal-fundo {
+    display: none; position: fixed; inset: 0; z-index: 90;
+    background: rgba(0,0,0,.6);
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-fundo.aberto { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--borda);
+    border-radius: 16px; padding: 22px; width: 100%; max-width: 380px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .modal h3 { font-size: 16px; }
+  .modal label { color: var(--texto2); font-size: 12.5px; margin-top: 4px; }
+  .modal input, .modal select {
+    background: var(--bg2); color: var(--texto); border: 1px solid var(--borda);
+    border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+  }
+  .modal input:focus, .modal select:focus { outline: none; border-color: var(--azul); }
+  .modal-acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+  .btn-sec { background: #232833; }
+  .btn-sec:hover { background: #2c323f; }
+
+  /* Linhas do orçamento com ações */
+  .orc-linha {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 4px; border-bottom: 1px solid #1c2029;
+  }
+  .orc-linha:last-of-type { border-bottom: 0; }
+  .cat-acoes { display: flex; gap: 6px; margin-left: auto; }
+  .btn-mini {
+    background: #232833; border: 1px solid var(--borda); color: var(--texto2);
+    padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .btn-mini:hover { color: var(--texto); background: #2c323f; }
+  .btn-mini.perigo:hover { color: var(--vermelho); border-color: var(--vermelho); }
+
   .secao { display: none; }
   .secao.ativa { display: block; }
 
@@ -526,6 +564,21 @@
   <div class="nav-item" data-alvo="investimentos"><span class="nav-emoji">📈</span><span>Investir</span></div>
   <div class="nav-item" data-alvo="categorias"><span class="nav-emoji">🏷️</span><span>Categorias</span></div>
 </nav>
+
+<!-- Modal de orçamento -->
+<div class="modal-fundo" id="modalOrcamento">
+  <div class="modal">
+    <h3 id="modalTituloOrc">Novo orçamento</h3>
+    <label>Categoria</label>
+    <select id="orcCategoria"></select>
+    <label>Limite mensal (R$)</label>
+    <input type="number" id="orcLimite" min="0" step="0.01" placeholder="Ex.: 800">
+    <div class="modal-acoes">
+      <button class="btn-sec" id="orcCancelar">Cancelar</button>
+      <button id="orcSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
@@ -899,45 +952,91 @@ async function carregarCategorias(mes) {
 }
 
 // ===== Orçamento por categoria =====
+let orcamentoEditando = null;
+
 async function carregarOrcamento() {
   const mes = mesSelecionado || (new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0"));
   const area = document.getElementById("orcamentoLista");
   const budgets = await fetch(`/api/budgets?mes=${mes}`).then(r => r.json());
 
   if (!budgets.length) {
-    area.innerHTML = `<div class="vazio">Nenhum orçamento definido. Use o botão abaixo para criar um.</div>
+    area.innerHTML = `<div class="vazio">Nenhum orçamento definido ainda.</div>
       <div style="margin-top:12px"><button id="btnAddOrcamento">+ Definir orçamento</button></div>`;
   } else {
     area.innerHTML = budgets.map(b => {
       const estourado = b.pct > 100;
       const cor = estourado ? "var(--vermelho)" : b.pct > 80 ? "#fbbf24" : "var(--verde)";
       return `
-        <div class="cat-linha">
+        <div class="orc-linha">
           <div class="cat-info"><div class="nome">${b.category}</div><div class="sub">${b.pct}% do limite</div></div>
           <div class="cat-barra"><div class="fill" style="width:${Math.min(100, b.pct)}%;background:${cor}"></div></div>
           <div class="cat-valor ${estourado ? "negativo" : ""}">${fmt(b.spent)} / ${fmt(b.limit)}</div>
+          <div class="cat-acoes">
+            <button class="btn-mini" data-editar="${b.category}">Editar</button>
+            <button class="btn-mini perigo" data-remover="${b.category}">Remover</button>
+          </div>
         </div>`;
     }).join("") + `
       <div style="margin-top:12px"><button id="btnAddOrcamento">+ Novo orçamento</button></div>`;
   }
 
-  const btn = document.getElementById("btnAddOrcamento");
-  if (btn && !btn.dataset.ligado) {
-    btn.dataset.ligado = "1";
+  document.getElementById("btnAddOrcamento").addEventListener("click", () => abrirModalOrcamento());
+  area.querySelectorAll("[data-editar]").forEach(btn =>
     btn.addEventListener("click", () => {
-      const cat = prompt("Categoria (ex.: Alimentação):");
-      if (!cat) return;
-      const valor = prompt("Limite mensal em R$ (ex.: 800):");
-      const limit = parseFloat(String(valor).replace(",", "."));
-      if (isNaN(limit) || limit < 0) return alert("Valor inválido.");
-      fetch("/api/budgets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: cat, limit }),
-      }).then(() => carregarOrcamento());
-    });
-  }
+      const b = budgets.find(x => x.category === btn.dataset.editar);
+      abrirModalOrcamento(b.category, b.limit);
+    }));
+  area.querySelectorAll("[data-remover]").forEach(btn =>
+    btn.addEventListener("click", async () => {
+      if (!confirm(`Remover o orçamento de "${btn.dataset.remover}"?`)) return;
+      await fetch(`/api/budgets/${encodeURIComponent(btn.dataset.remover)}`, { method: "DELETE" });
+      carregarOrcamento();
+    }));
 }
+
+async function abrirModalOrcamento(categoria = null, limite = null) {
+  orcamentoEditando = categoria;
+  const mes = mesSelecionado || (new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0"));
+  const [rank, budgets] = await Promise.all([
+    fetch(`/api/ranking/${mes}`).then(r => r.json()).catch(() => []),
+    fetch(`/api/budgets?mes=${mes}`).then(r => r.json()).catch(() => []),
+  ]);
+  // Categorias existentes: com gasto no mês + já orçadas + conhecidas do app
+  const cats = new Set([
+    ...rank.map(r => r.category),
+    ...budgets.map(b => b.category),
+    ...Object.keys(ICONE_CAT),
+  ]);
+  const sel = document.getElementById("orcCategoria");
+  sel.innerHTML = [...cats].sort((a, b) => a.localeCompare(b, "pt-BR")).map(c =>
+    `<option value="${c}" ${c === categoria ? "selected" : ""}>${c}</option>`).join("");
+  sel.disabled = !!categoria; // ao editar, a categoria fica fixa (é a chave do registro)
+  document.getElementById("orcLimite").value = limite ?? "";
+  document.getElementById("modalTituloOrc").textContent = categoria ? "Editar orçamento" : "Novo orçamento";
+  document.getElementById("modalOrcamento").classList.add("aberto");
+}
+
+function fecharModalOrcamento() {
+  document.getElementById("modalOrcamento").classList.remove("aberto");
+  orcamentoEditando = null;
+}
+
+document.getElementById("orcCancelar").addEventListener("click", fecharModalOrcamento);
+document.getElementById("modalOrcamento").addEventListener("click", (e) => {
+  if (e.target.id === "modalOrcamento") fecharModalOrcamento();
+});
+document.getElementById("orcSalvar").addEventListener("click", async () => {
+  const category = orcamentoEditando || document.getElementById("orcCategoria").value;
+  const limit = parseFloat(document.getElementById("orcLimite").value.replace(",", "."));
+  if (!category || isNaN(limit) || limit < 0) return alert("Informe um limite válido.");
+  await fetch("/api/budgets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ category, limit }),
+  });
+  fecharModalOrcamento();
+  carregarOrcamento();
+});
 
 // ===== Faturas =====
 async function carregarFaturas() {
