@@ -129,6 +129,11 @@
   .cat-nome { font-weight: 600; color: #f3f4f6; }
   .cat-sub { color: var(--texto3); font-size: 12px; margin-top: 2px; }
 
+  /* Números tabulares: alinha colunas e evita quebra nos cards 2x2 do mobile */
+  .card .value, .mini .value, .inv-valor, .cat-valor, .inv-inst-valor .v, tbody td {
+    font-variant-numeric: tabular-nums;
+  }
+
   .rosca-wrap { display: flex; align-items: center; gap: 24px; }
   .rosca-box { position: relative; width: 190px; height: 190px; flex-shrink: 0; }
   .rosca-box canvas { width: 100% !important; height: 100% !important; }
@@ -268,7 +273,6 @@
   .bottom-nav { display: none; }
 
   @media (max-width: 900px) {
-    /* Sidebar vira topo fixo com o logo */
     .layout { flex-direction: column; }
     .sidebar {
       width: 100%; height: auto; position: sticky; top: 0; z-index: 60;
@@ -279,48 +283,38 @@
     .sidebar nav { display: none; }
     .sidebar .logo { padding: 0; }
 
-    /* Conteúdo com folga para a barra inferior */
     .conteudo { padding: 16px 14px 96px; }
 
-    /* Topo empilhado e compacto */
     .topo { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
     .topo h1 { font-size: 21px; }
     .acoes { width: 100%; justify-content: space-between; }
 
-    /* Filtro ocupa a largura */
     .linha-filtro { gap: 10px; }
     .linha-filtro select { flex: 1; min-width: 0; width: 100%; font-size: 16px; }
 
-    /* Cards de estatísticas em 2 colunas */
     .cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .card { padding: 14px; }
     .card .value { font-size: 20px; }
     .card .sub { font-size: 11px; }
 
-    /* Grades e painéis */
     .grid2, .grid3 { grid-template-columns: 1fr; gap: 12px; }
     .painel { padding: 16px; }
 
-    /* Gráfico de rosca menor */
     .rosca-wrap { flex-direction: column; align-items: center; }
     .rosca-box { width: 160px; height: 160px; }
 
-    /* Tabelas: rolagem horizontal em vez de espremer */
     #tabelaRecentes, #tabelaTodas, #tabelaParcelas {
       overflow-x: auto; -webkit-overflow-scrolling: touch;
     }
     #tabelaRecentes table, #tabelaTodas table, #tabelaParcelas table { min-width: 560px; }
 
-    /* Abas roláveis */
     .tabs { overflow-x: auto; flex-wrap: nowrap; }
 
-    /* Investimentos */
     .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .inv-header { padding: 16px 18px; }
     .inv-patrimonio .valor { font-size: 26px; }
     .inv-badge { display: none; }
 
-    /* Categorias e instituições com larguras reduzidas */
     .cat-info { width: 92px; }
     .cat-valor { width: 96px; font-size: 13px; }
     .cat-pct { width: 38px; }
@@ -329,10 +323,9 @@
     .inv-inst-valor { width: 106px; }
     .inv-inst-linha { gap: 8px; }
 
-    /* Barra de navegação inferior — horizontal, estilo tab bar */
     .bottom-nav {
       display: flex;
-      flex-direction: row;                     /* ← corrige a verticalização */
+      flex-direction: row;
       position: fixed;
       left: 0; right: 0; bottom: 0;
       z-index: 70;
@@ -341,7 +334,7 @@
       -webkit-backdrop-filter: blur(20px) saturate(150%);
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
-      gap: 0;                                 /* anula o gap do nav base */
+      gap: 0;
       padding: 6px 6px calc(8px + env(safe-area-inset-bottom));
       justify-content: space-around;
       align-items: stretch;
@@ -510,6 +503,11 @@
     <!-- ===== CATEGORIAS ===== -->
     <section class="secao" id="categorias">
       <div class="painel">
+        <div class="painel-topo"><h2>Orçamento do mês</h2></div>
+        <div class="desc">Defina limites por categoria e acompanhe o gasto</div>
+        <div id="orcamentoLista"></div>
+      </div>
+      <div class="painel">
         <div class="painel-topo"><h2>Categorias</h2></div>
         <div class="desc">Ranking de gastos do mês por categoria</div>
         <div id="categoriasLista"></div>
@@ -533,12 +531,12 @@
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const MESES_CURTOS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtCompact = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 });
 const PALETA = ["#f43f5e", "#f472b6", "#a78bfa", "#818cf8", "#38bdf8", "#34d399", "#fbbf24", "#fb923c", "#22d3ee", "#fda4af"];
+const PALETA_CAT = ["#34d399", "#2dd4bf", "#38bdf8", "#818cf8", "#a78bfa", "#fbbf24", "#fb923c", "#22d3ee", "#a3e635", "#94a3b8"];
 const ICONE_CAT = { "Moradia":"🏠", "Alimentação":"🍔", "Transporte":"🚗", "Assinaturas":"🎬", "Saúde":"💊", "Lazer":"🍿", "Educação":"🎓", "Compras":"🛍️", "Serviços":"🛠️", "Transferências":"🔄", "Outros":"📌" };
 const mesesLongos = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 
-// Classes de investimento alinhadas às categorias do seu Pluggy:
-// Fundo Imobiliário, Ações (Stock), Fundo de Renda Fixa, ETF, Tesouro, CDB
 const INV_CLASSES = [
   { chave: "Fundo Imobiliário", icone: "🏢", cor: "#8b5cf6", tipos: ["FII", "FUNDO IMOBILIARIO", "REIT"] },
   { chave: "Ações", icone: "📈", cor: "#3b82f6", tipos: ["STOCK", "ACAO", "AÇÃO", "ACOES", "EQUITY", "BDR", "SHARES", "EQUITIES"] },
@@ -549,11 +547,6 @@ const INV_CLASSES = [
   { chave: "Criptoativos", icone: "🪙", cor: "#f59e0b", tipos: ["CRYPTO", "CRIPTO", "BITCOIN", "BTC", "ETHEREUM", "ETH"] },
 ];
 
-// Classifica usando type + subtype + code + name.
-// O subtype do Pluggy vem como "REAL_ESTATE_FUND" (com underscore) e o type
-// como "EQUITY". FIIs também chegam com subtype "STOCK" (ex.: BTCI11, SNAG11),
-// então o que separa de verdade é o ticker terminando em "11" (convenção B3).
-// ETFs também terminam em "11" (BOVA11), por isso são checados ANTES.
 function classificarInvestimento(inv) {
   const type = (inv.type || "").toUpperCase();
   const subtype = (inv.subtype || "").toUpperCase().replace(/_/g, " ").replace(/-/g, " ");
@@ -561,11 +554,9 @@ function classificarInvestimento(inv) {
   const code = (inv.code || "").toUpperCase();
   const alvo = type + " " + subtype + " " + name + " " + code;
 
-  // 1) ETF primeiro: BOVA11, IVVB11... também terminam em "11"
   const ehETF = type.includes("ETF") || subtype.includes("ETF") || name.includes("ETF") || code.includes("ETF");
   if (ehETF) return INV_CLASSES.find(x => x.chave === "ETF");
 
-  // 2) Fundo Imobiliário: subtype REAL ESTATE ou ticker terminando em "11"
   const ehFII =
     subtype.includes("REAL ESTATE") || subtype.includes("FII") || subtype.includes("IMOBILIARIO") ||
     name.includes("FII") || name.includes("FUNDO IMOBILIARIO") || name.includes("IMOBILIARIO") ||
@@ -573,7 +564,6 @@ function classificarInvestimento(inv) {
     /11$/.test(code) || /11$/.test(name);
   if (ehFII) return INV_CLASSES.find(x => x.chave === "Fundo Imobiliário");
 
-  // 3) Demais classes, específicas primeiro
   const prioridade = ["Tesouro", "CDB", "Ações", "Criptoativos", "Fundo de Renda Fixa"];
   for (const chave of prioridade) {
     const c = INV_CLASSES.find(x => x.chave === chave);
@@ -584,7 +574,7 @@ function classificarInvestimento(inv) {
 
 const hora = new Date().getHours();
 const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
-document.getElementById("saudacao").textContent = saudacao + ", bem-vindo de volta • Gestão financeira inteligente";
+document.getElementById("saudacao").textContent = saudacao + ", bem-vindo de volta";
 
 function mesNome(mes) {
   if (!mes) return "";
@@ -617,8 +607,13 @@ function variacao(atual, anterior) {
   if (!anterior) return null;
   return ((atual - anterior) / anterior) * 100;
 }
+function linhaVariacao(varPct, invertido) {
+  if (varPct === null || varPct === undefined || !isFinite(varPct)) return "";
+  const bom = invertido ? varPct < 0 : varPct > 0;
+  const seta = varPct > 0 ? "▲" : "▼";
+  return `<div class="variacao ${bom ? "positivo" : "negativo"}">${seta} ${pctTxt(varPct)} vs mês anterior</div>`;
+}
 
-// Navegação entre seções (menu lateral + barra inferior)
 document.querySelectorAll(".nav-item").forEach((el) => {
   el.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("ativo"));
@@ -629,7 +624,6 @@ document.querySelectorAll(".nav-item").forEach((el) => {
   });
 });
 
-// Tabela de transações (reutilizável)
 function montarTabela(tx, filtro) {
   const lista = filtro === "entradas" ? tx.filter(t => t.amount > 0)
               : filtro === "saidas" ? tx.filter(t => t.amount < 0) : tx;
@@ -654,7 +648,6 @@ function montarTabela(tx, filtro) {
   </table>`;
 }
 
-// Tabela de compras parceladas
 function montarTabelaParcelas(parcs) {
   if (!parcs.length) return `<div class="vazio">Nenhuma compra parcelada em aberto.</div>`;
   return `<table>
@@ -678,14 +671,14 @@ function montarTabelaParcelas(parcs) {
 
 let txLimite = 10;
 let filtroAtual = "todas";
-let mesSelecionado = null; // YYYY-MM
+let mesSelecionado = null;
+let dadosMensais = [];
 let graficoFluxo = null;
 let graficoRosca = null;
 
-// Monta o seletor de meses do ano vigente (com dados) e define o mês padrão
 function montarSeletor(monthlyAno) {
   const sel = document.getElementById("seletorMes");
-  const mesesComDados = monthlyAno.map(m => m.mes).sort(); // ordem crescente
+  const mesesComDados = monthlyAno.map(m => m.mes).sort();
   if (!mesesComDados.length) {
     sel.innerHTML = `<option value="">Sem dados no ano</option>`;
     return;
@@ -709,6 +702,8 @@ async function carregarVisao() {
       fetch("/api/investimentos").then(r => r.json()),
       fetch("/api/investimentos/instituicoes").then(r => r.json()),
     ]);
+
+    dadosMensais = monthlyAno;
 
     if (!document.getElementById("seletorMes").options.length) {
       montarSeletor(monthlyAno);
@@ -744,9 +739,9 @@ async function carregarVisao() {
       melhoresEl.innerHTML = `<div class="card vazio">Sem histórico mensal ainda.</div>`;
     } else {
       melhoresEl.innerHTML = `
-        <div class="painel mini"><div class="label">Maior ganho • Recorde</div><div class="value positivo">${fmt(melhores.maiorGanho.valor)}</div><div class="sub">${mesNome(melhores.maiorGanho.mes)}</div></div>
-        <div class="painel mini"><div class="label">Pico de gastos</div><div class="value negativo">${fmt(melhores.picoGastos.valor)}</div><div class="sub">${mesNome(melhores.picoGastos.mes)}</div></div>
-        <div class="painel mini"><div class="label">Poupança de ${melhores.ano}</div><div class="value ${melhores.poupancaAno >= 0 ? "positivo" : "negativo"}">${fmt(melhores.poupancaAno)}</div><div class="sub">Entradas − saídas do ano</div></div>`;
+        <div class="painel mini"><div class="label">Maior ganho • Recorde</div><div class="value positivo">${fmtCompact(melhores.maiorGanho.valor)}</div><div class="sub">${mesNome(melhores.maiorGanho.mes)}</div></div>
+        <div class="painel mini"><div class="label">Pico de gastos</div><div class="value negativo">${fmtCompact(melhores.picoGastos.valor)}</div><div class="sub">${mesNome(melhores.picoGastos.mes)}</div></div>
+        <div class="painel mini"><div class="label">Poupança de ${melhores.ano}</div><div class="value ${melhores.poupancaAno >= 0 ? "positivo" : "negativo"}">${fmtCompact(melhores.poupancaAno)}</div><div class="sub">Entradas − saídas do ano</div></div>`;
     }
 
     await carregarCardsMes();
@@ -762,12 +757,15 @@ async function carregarVisao() {
 
     renderInvestimentos(invRes, invInst);
     carregarFaturas();
+    carregarOrcamento();
 
     try {
       const info = await fetch("/api/syncinfo").then(r => r.json());
       if (info.lastSyncAt) {
         document.getElementById("rodapeSync").textContent =
           "Atualizado em " + dataBonita(info.lastSyncAt) + " • Dados do Pluggy via Open Finance Brasil";
+        document.getElementById("saudacao").textContent =
+          saudacao + " • Atualizado em " + dataBonita(info.lastSyncAt);
       }
       if (info.consentExpiresAt) {
         const dias = Math.floor((new Date(info.consentExpiresAt) - Date.now()) / 86400000);
@@ -789,6 +787,11 @@ async function carregarCardsMes() {
   const saldoRes = await fetch("/api/saldo").then(r => r.json());
   const invRes = await fetch("/api/investimentos").then(r => r.json());
 
+  const idx = dadosMensais.findIndex(m => m.mes === mesSelecionado);
+  const mesAnterior = idx > 0 ? dadosMensais[idx - 1] : null;
+  const varGanhos = mesAnterior && mesAnterior.ganhos ? variacao(insights.ganhos, mesAnterior.ganhos) : null;
+  const varGastos = mesAnterior && mesAnterior.gastos ? variacao(insights.gastos, mesAnterior.gastos) : null;
+
   const cards = document.getElementById("cards");
   if (Array.isArray(insights) && insights.length === 0) {
     cards.innerHTML = `<div class="card vazio">Sem dados para ${mesNome(mesSelecionado)}.</div>`;
@@ -799,22 +802,24 @@ async function carregarCardsMes() {
     cards.innerHTML = `
       <div class="card">
         <div class="label">Saldo Total</div>
-        <div class="value ${saldoRes.total >= 0 ? "positivo" : "negativo"}">${fmt(saldoRes.total)}</div>
+        <div class="value ${saldoRes.total >= 0 ? "positivo" : "negativo"}">${fmtCompact(saldoRes.total)}</div>
         <div class="sub">Disponível em contas correntes</div>
       </div>
       <div class="card">
         <div class="label">Entradas · ${mesNome(i.mes)}</div>
-        <div class="value positivo">${fmt(i.ganhos)}</div>
+        <div class="value positivo">${fmtCompact(i.ganhos)}</div>
+        ${linhaVariacao(varGanhos, false)}
         <div class="sub">Total recebido no mês</div>
       </div>
       <div class="card">
         <div class="label">Saídas · ${mesNome(i.mes)}</div>
-        <div class="value negativo">${fmt(i.gastos)}</div>
+        <div class="value negativo">${fmtCompact(i.gastos)}</div>
+        ${linhaVariacao(varGastos, true)}
         <div class="sub">${receitaComprometida}% da receita comprometida</div>
       </div>
       <div class="card">
         <div class="label">Investimentos</div>
-        <div class="value neutro">${invTotal ? fmt(invTotal) : "—"}</div>
+        <div class="value neutro">${invTotal ? fmtCompact(invTotal) : "—"}</div>
         <div class="sub">${invRes.length ? invRes.length + " ativo(s) pela conexão" : "Seu banco não expõe investimentos"}</div>
       </div>`;
   }
@@ -829,12 +834,12 @@ async function carregarCardsMes() {
       <div class="rosca-wrap">
         <div class="rosca-box">
           <canvas id="rosca"></canvas>
-          <div class="rosca-center"><div class="total">${fmt(total)}</div><div class="leg">gastos no mês</div></div>
+          <div class="rosca-center"><div class="total">${fmtCompact(total)}</div><div class="leg">gastos no mês</div></div>
         </div>
         <div class="legenda">
           ${rank.slice(0, 8).map((r, i) => {
             const pct = Math.round((r.total / total) * 100);
-            return `<div class="l"><span class="dot" style="background:${PALETA[i % PALETA.length]}"></span>${r.category}<b>${pct}%</b></div>`;
+            return `<div class="l"><span class="dot" style="background:${PALETA_CAT[i % PALETA_CAT.length]}"></span>${r.category}<b>${pct < 1 ? "—" : pct + "%"}</b></div>`;
           }).join("")}
         </div>
       </div>`;
@@ -843,7 +848,7 @@ async function carregarCardsMes() {
       type: "doughnut",
       data: {
         labels: rank.map(r => r.category),
-        datasets: [{ data: rank.map(r => r.total), backgroundColor: rank.map((_, i) => PALETA[i % PALETA.length]), borderWidth: 0, hoverOffset: 6 }],
+        datasets: [{ data: rank.map(r => r.total), backgroundColor: rank.map((_, i) => PALETA_CAT[i % PALETA_CAT.length]), borderWidth: 0, hoverOffset: 6 }],
       },
       options: { responsive: true, cutout: "72%", plugins: { legend: { display: false } } },
     });
@@ -851,7 +856,6 @@ async function carregarCardsMes() {
   document.getElementById("descRosca").textContent = "Despesas de " + mesNome(mesSelecionado) + " por categoria";
 }
 
-// Página Categorias: independente do seletor de mês (mostra o mês mais recente)
 async function carregarCategorias(mes) {
   const rank = await fetch(`/api/ranking/${mes}`).then(r => r.json());
   const catLista = document.getElementById("categoriasLista");
@@ -860,17 +864,65 @@ async function carregarCategorias(mes) {
   } else {
     const max = rank[0].total;
     const total = rank.reduce((s, r) => s + r.total, 0);
-    catLista.innerHTML = rank.map((r, i) => `
+    catLista.innerHTML = rank.map((r, i) => {
+      const pct = Math.round((r.total / total) * 100);
+      const barra = pct < 1
+        ? `<div class="cat-barra"></div>`
+        : `<div class="cat-barra"><div class="fill" style="width:${Math.max(4, (r.total / max) * 100)}%;background:${PALETA_CAT[i % PALETA_CAT.length]}"></div></div>`;
+      const pctTxt2 = pct < 1 ? "—" : pct + "%";
+      return `
       <div class="cat-linha">
         <div class="icone-cat">${ICONE_CAT[r.category] || "📌"}</div>
         <div class="cat-info"><div class="nome">${r.category}</div></div>
-        <div class="cat-barra"><div class="fill" style="width:${Math.max(4, (r.total / max) * 100)}%;background:${PALETA[i % PALETA.length]}"></div></div>
+        ${barra}
         <div class="cat-valor negativo">${fmt(r.total)}</div>
-        <div class="cat-pct">${Math.round((r.total / total) * 100)}%</div>
-      </div>`).join("");
+        <div class="cat-pct">${pctTxt2}</div>
+      </div>`;
+    }).join("");
   }
   const desc = document.querySelector("#categorias .desc");
   if (desc) desc.textContent = "Ranking de gastos de " + mesNome(mes) + " por categoria";
+}
+
+// ===== Orçamento por categoria =====
+async function carregarOrcamento() {
+  const mes = mesSelecionado || (new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0"));
+  const area = document.getElementById("orcamentoLista");
+  const budgets = await fetch(`/api/budgets?mes=${mes}`).then(r => r.json());
+
+  if (!budgets.length) {
+    area.innerHTML = `<div class="vazio">Nenhum orçamento definido. Use o botão abaixo para criar um.</div>
+      <div style="margin-top:12px"><button id="btnAddOrcamento">+ Definir orçamento</button></div>`;
+  } else {
+    area.innerHTML = budgets.map(b => {
+      const estourado = b.pct > 100;
+      const cor = estourado ? "var(--vermelho)" : b.pct > 80 ? "#fbbf24" : "var(--verde)";
+      return `
+        <div class="cat-linha">
+          <div class="cat-info"><div class="nome">${b.category}</div><div class="sub">${b.pct}% do limite</div></div>
+          <div class="cat-barra"><div class="fill" style="width:${Math.min(100, b.pct)}%;background:${cor}"></div></div>
+          <div class="cat-valor ${estourado ? "negativo" : ""}">${fmt(b.spent)} / ${fmt(b.limit)}</div>
+        </div>`;
+    }).join("") + `
+      <div style="margin-top:12px"><button id="btnAddOrcamento">+ Novo orçamento</button></div>`;
+  }
+
+  const btn = document.getElementById("btnAddOrcamento");
+  if (btn && !btn.dataset.ligado) {
+    btn.dataset.ligado = "1";
+    btn.addEventListener("click", () => {
+      const cat = prompt("Categoria (ex.: Alimentação):");
+      if (!cat) return;
+      const valor = prompt("Limite mensal em R$ (ex.: 800):");
+      const limit = parseFloat(String(valor).replace(",", "."));
+      if (isNaN(limit) || limit < 0) return alert("Valor inválido.");
+      fetch("/api/budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: cat, limit }),
+      }).then(() => carregarOrcamento());
+    });
+  }
 }
 
 // ===== Faturas =====
@@ -894,13 +946,13 @@ async function carregarFaturas() {
       const cards = [
         `<div class="card">
           <div class="label">Próximas faturas</div>
-          <div class="value positivo">${fmt(totalFuturo)}</div>
+          <div class="value positivo">${fmtCompact(totalFuturo)}</div>
           <div class="sub">${fats.length} fatura(s) em aberto</div>
         </div>`,
         ...fats.slice(0, 5).map(f => `
           <div class="card">
             <div class="label">${f.cartao || "Cartão"} • Vence ${fmtData(f.due_date)}</div>
-            <div class="value positivo">${fmt(f.total_amount)}</div>
+            <div class="value positivo">${fmtCompact(f.total_amount)}</div>
             <div class="sub">Mínimo: ${fmt(f.minimum_payment)}</div>
           </div>`),
       ];
@@ -938,7 +990,7 @@ function renderInvestimentos(invRes, invInst) {
     <div class="inv-header">
       <div class="inv-patrimonio">
         <div class="label">Patrimônio Investido Consolidado</div>
-        <div class="valor">${total ? fmt(total) : "R$ 0,00"}</div>
+        <div class="valor">${total ? fmtCompact(total) : "R$ 0,00"}</div>
         <div class="sub">${total ? classes.length + " classe(s) de ativos" : "Nenhum ativo disponível pela conexão"}</div>
       </div>
     </div>`;
@@ -957,7 +1009,7 @@ function renderInvestimentos(invRes, invInst) {
             </div>
             <div class="inv-badge" style="color:${c.cor};background:${c.cor}1a">${aloc}%</div>
           </div>
-          <div class="inv-valor">${fmt(c.total)}</div>
+          <div class="inv-valor">${fmtCompact(c.total)}</div>
           <div class="inv-barra-linha">
             <div class="inv-barra"><div class="fill" style="width:${Math.max(4, aloc)}%;background:${c.cor}"></div></div>
             <div class="inv-aloc">${aloc}%</div>
@@ -991,7 +1043,7 @@ function renderInvestimentos(invRes, invInst) {
         <div class="inv-legenda">
           ${classes.map(c => {
             const aloc = total > 0 ? Math.round((c.total / total) * 100) : 0;
-            return `<div class="inv-leg-item"><span class="dot" style="background:${c.cor}"></span>${c.chave}<b>${fmt(c.total)}</b><span style="color:var(--texto2)">(${aloc}%)</span></div>`;
+            return `<div class="inv-leg-item"><span class="dot" style="background:${c.cor}"></span>${c.chave}<b>${fmtCompact(c.total)}</b><span style="color:var(--texto2)">(${aloc}%)</span></div>`;
           }).join("")}
         </div>
       </div>`;
@@ -1001,7 +1053,6 @@ function renderInvestimentos(invRes, invInst) {
     <div class="inv-footer">🔒 Dados sincronizados do Pluggy via Open Finance Brasil</div>`;
 }
 
-// Tabela de instituições: mostra o montante INVESTIDO por banco
 function renderInstituicoes(invInst) {
   const insts = invInst || [];
   if (!insts.length) return "";
@@ -1021,7 +1072,7 @@ function renderInstituicoes(invInst) {
           </div>
           <div class="inv-inst-barra"><div class="fill" style="width:${Math.max(4, pct)}%;background:#10b981"></div></div>
           <div class="inv-inst-valor">
-            <div class="v">${fmt(i.total)}</div>
+            <div class="v">${fmtCompact(i.total)}</div>
             <div class="p">${pct}%</div>
           </div>
         </div>`;
@@ -1029,14 +1080,12 @@ function renderInstituicoes(invInst) {
     </div>`;
 }
 
-// Troca de mês no seletor
 document.getElementById("seletorMes").addEventListener("change", async (e) => {
   mesSelecionado = e.target.value;
   if (!mesSelecionado) return;
   await carregarCardsMes();
 });
 
-// Filtros da tabela de transações
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", async () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("ativo"));
