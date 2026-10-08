@@ -100,7 +100,14 @@
   }
   .card .value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
   .card .sub { color: var(--texto2); font-size: 12px; margin-top: 8px; }
-  .card .variacao { font-size: 12px; margin-top: 6px; font-weight: 600; }
+  /* Badge de variação vs mês anterior */
+  .card .variacao {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 700; margin-top: 8px;
+  }
+  .variacao.positivo { background: rgba(34,197,94,.12); color: var(--verde); }
+  .variacao.negativo { background: rgba(244,63,94,.12); color: var(--vermelho); }
   .positivo { color: var(--verde); }
   .negativo { color: var(--vermelho); }
   .neutro { color: var(--texto); }
@@ -875,6 +882,62 @@ function montarSeletor(monthlyAno) {
   sel.value = mesSelecionado;
 }
 
+// ===== Fluxo Mensal: entradas vs saídas com médias tracejadas, mês destacado e tooltip com variação % =====
+function renderFluxo() {
+  if (!dadosMensais.length) return;
+  const anoAtual = new Date().getFullYear();
+  const fluxo = [...dadosMensais].reverse();
+  const ctxG = document.getElementById("grafico").getContext("2d");
+  const g1 = ctxG.createLinearGradient(0, 0, 0, 250); g1.addColorStop(0, "rgba(34,197,94,.28)"); g1.addColorStop(1, "rgba(34,197,94,0)");
+  const g2 = ctxG.createLinearGradient(0, 0, 0, 250); g2.addColorStop(0, "rgba(244,63,94,.25)"); g2.addColorStop(1, "rgba(244,63,94,0)");
+
+  const mediaGanhos = fluxo.reduce((s, m) => s + (m.ganhos || 0), 0) / fluxo.length;
+  const mediaGastos = fluxo.reduce((s, m) => s + (m.gastos || 0), 0) / fluxo.length;
+
+  if (graficoFluxo) graficoFluxo.destroy();
+  graficoFluxo = new Chart(ctxG, {
+    type: "line",
+    data: {
+      labels: fluxo.map(m => mesCurto(m.mes)),
+      datasets: [
+        { label: "Entradas", data: fluxo.map(m => m.ganhos), borderColor: "#22c55e", backgroundColor: g1, fill: true, tension: .35, pointRadius: fluxo.map(m => m.mes === mesSelecionado ? 4 : 0), pointBackgroundColor: "#22c55e", pointHoverRadius: 5, borderWidth: 2 },
+        { label: "Saídas", data: fluxo.map(m => m.gastos), borderColor: "#f43f5e", backgroundColor: g2, fill: true, tension: .35, pointRadius: fluxo.map(m => m.mes === mesSelecionado ? 4 : 0), pointBackgroundColor: "#f43f5e", pointHoverRadius: 5, borderWidth: 2 },
+        { label: "Média entradas", data: fluxo.map(() => mediaGanhos), borderColor: "rgba(34,197,94,.45)", borderDash: [6, 6], pointRadius: 0, borderWidth: 1.5, fill: false },
+        { label: "Média saídas", data: fluxo.map(() => mediaGastos), borderColor: "rgba(244,63,94,.45)", borderDash: [6, 6], pointRadius: 0, borderWidth: 1.5, fill: false },
+      ],
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#9ca3af", usePointStyle: true, pointStyle: "circle", padding: 16 } },
+        tooltip: {
+          padding: 12, backgroundColor: "#1e2430", titleColor: "#fff",
+          bodyColor: "#cbd5e1", borderColor: "#2a3140", borderWidth: 1,
+          callbacks: {
+            label: (ctx) => {
+              if (ctx.dataset.label.startsWith("Média")) return ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`;
+              const data = ctx.dataset.data;
+              const prev = data[ctx.dataIndex - 1];
+              let varTxt = "";
+              if (prev) {
+                const p = ((ctx.parsed.y - prev) / prev) * 100;
+                varTxt = ` (${p >= 0 ? "▲" : "▼"} ${pctTxt(p)} vs mês anterior)`;
+              }
+              return ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}${varTxt}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { color: "#6b7280" }, grid: { color: "rgba(255,255,255,.04)" } },
+        y: { ticks: { color: "#6b7280", callback: (v) => "R$ " + v }, grid: { color: "rgba(255,255,255,.04)" } },
+      },
+    },
+  });
+  document.getElementById("descFluxo").textContent = "Entradas versus Saídas de " + anoAtual + " • tracejado = média do ano";
+}
+
 async function carregarVisao() {
   try {
     // Skeleton enquanto carrega
@@ -898,30 +961,7 @@ async function carregarVisao() {
       montarSeletor(monthlyAno);
     }
 
-    const fluxo = [...monthlyAno].reverse();
-    const ctxG = document.getElementById("grafico").getContext("2d");
-    const g1 = ctxG.createLinearGradient(0, 0, 0, 250); g1.addColorStop(0, "rgba(34,197,94,.28)"); g1.addColorStop(1, "rgba(34,197,94,0)");
-    const g2 = ctxG.createLinearGradient(0, 0, 0, 250); g2.addColorStop(0, "rgba(244,63,94,.25)"); g2.addColorStop(1, "rgba(244,63,94,0)");
-    if (graficoFluxo) graficoFluxo.destroy();
-    graficoFluxo = new Chart(ctxG, {
-      type: "line",
-      data: {
-        labels: fluxo.map(m => mesCurto(m.mes)),
-        datasets: [
-          { label: "Entradas", data: fluxo.map(m => m.ganhos), borderColor: "#22c55e", backgroundColor: g1, fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2 },
-          { label: "Saídas", data: fluxo.map(m => m.gastos), borderColor: "#f43f5e", backgroundColor: g2, fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2 },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { labels: { color: "#9ca3af", usePointStyle: true, pointStyle: "circle", padding: 16 } } },
-        scales: {
-          x: { ticks: { color: "#6b7280" }, grid: { color: "rgba(255,255,255,.04)" } },
-          y: { ticks: { color: "#6b7280", callback: (v) => "R$ " + v }, grid: { color: "rgba(255,255,255,.04)" } },
-        },
-      },
-    });
-    document.getElementById("descFluxo").textContent = "Entradas versus Saídas de " + anoAtual;
+    renderFluxo();
 
     const melhoresEl = document.getElementById("melhores");
     if (!melhores.maiorGanho) {
@@ -1063,9 +1103,25 @@ async function carregarCardsMes() {
       type: "doughnut",
       data: {
         labels: rank.map(r => r.category),
-        datasets: [{ data: rank.map(r => r.total), backgroundColor: rank.map((_, i) => PALETA_CAT[i % PALETA_CAT.length]), borderWidth: 0, hoverOffset: 6 }],
+        datasets: [{ data: rank.map(r => r.total), backgroundColor: rank.map((_, i) => PALETA_CAT[i % PALETA_CAT.length]), borderColor: "#171a21", borderWidth: 2, hoverOffset: 6 }],
       },
-      options: { responsive: true, cutout: "72%", plugins: { legend: { display: false } } },
+      options: {
+        responsive: true, cutout: "72%",
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            padding: 12, backgroundColor: "#1e2430", titleColor: "#fff",
+            bodyColor: "#cbd5e1", borderColor: "#2a3140", borderWidth: 1,
+            callbacks: {
+              label: (ctx) => {
+                const tot = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = tot ? Math.round((ctx.parsed / tot) * 100) : 0;
+                return ` ${ctx.label}: ${fmt(ctx.parsed)} (${pct}%)`;
+              },
+            },
+          },
+        },
+      },
     });
   }
   document.getElementById("descRosca").textContent = "Despesas de " + mesNome(mesSelecionado) + " por categoria";
@@ -1349,7 +1405,15 @@ function renderGraficoPatrimonio() {
     },
     options: {
       responsive: true,
-      plugins: { legend: { labels: { color: "#9ca3af", usePointStyle: true, pointStyle: "circle", padding: 14 } } },
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#9ca3af", usePointStyle: true, pointStyle: "circle", padding: 14 } },
+        tooltip: {
+          padding: 12, backgroundColor: "#1e2430", titleColor: "#fff",
+          bodyColor: "#cbd5e1", borderColor: "#2a3140", borderWidth: 1,
+          callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` },
+        },
+      },
       scales: {
         x: { ticks: { color: "#6b7280", maxTicksLimit: 6 }, grid: { color: "rgba(255,255,255,.04)" } },
         y: { ticks: { color: "#6b7280", callback: v => "R$ " + v }, grid: { color: "rgba(255,255,255,.04)" } },
@@ -1390,6 +1454,7 @@ function renderInstituicoes(invInst) {
 document.getElementById("seletorMes").addEventListener("change", async (e) => {
   mesSelecionado = e.target.value;
   if (!mesSelecionado) return;
+  renderFluxo(); // atualiza o destaque do mês no gráfico
   await carregarCardsMes();
 });
 
