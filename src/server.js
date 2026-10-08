@@ -42,3 +42,19 @@ cron.schedule("0 3 * * *", runSync);
 
 app.listen({ port: process.env.PORT || 8181, host: "0.0.0.0" })
   .then(() => console.log("Fini rodando na porta 8181"));
+
+// ===== Features adicionais: orçamento + histórico de patrimônio =====
+const registerFeatures = require("./features");
+registerFeatures(app, db, {
+  getSaldoTotal: async () => {
+    // Soma dos saldos das contas correntes (mesma lógica do /api/saldo)
+    const row = db.prepare("SELECT SUM(balance) as t FROM accounts WHERE type IN ('CHECKING','SAVINGS')").get();
+    return row?.t || 0;
+  },
+  getInvestimentosTotal: async () => {
+    // Soma dos saldos de investimentos (mesma lógica do /api/investimentos)
+    const row = db.prepare("SELECT SUM(balance) as t FROM investments").get();
+    return row?.t || 0;
+  },
+  onSync: funcaoSyncAtual, // a função que já roda a sincronização no seu server.js
+});
