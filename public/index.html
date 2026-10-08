@@ -6,12 +6,15 @@
 <title>Fini</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="theme-color" content="#0e1014">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0e1014; --bg2: #13161c; --card: #171a21; --borda: #232833;
-    --texto: #e6e9ef; --texto2: #8a93a6; --texto3: #5c6474;
+    --texto: #e6e9ef; --texto2: #8a93a6; --texto3: #7a8496;
     --verde: #22c55e; --verde2: #16a34a; --vermelho: #f43f5e; --azul: #3b82f6;
   }
   body {
@@ -27,19 +30,14 @@
     padding: 20px 14px; display: flex; flex-direction: column; gap: 24px;
   }
   .logo { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
-  .logo-box {
-    width: 34px; height: 34px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--verde), var(--verde2));
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; color: #0b0f0d; font-size: 17px;
-  }
   .logo .nome { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
   nav { display: flex; flex-direction: column; gap: 4px; }
   .nav-item {
     padding: 10px 12px; border-radius: 10px; cursor: pointer;
-    color: var(--texto2); font-size: 14px; display: flex; align-items: center; gap: 11px;
+    color: var(--texto2); font-size: 13px; display: flex; align-items: center; gap: 11px;
     transition: background .15s, color .15s; border: 1px solid transparent;
   }
+  .sidebar .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
   .nav-item:hover { background: #1b1f28; color: var(--texto); }
   .nav-item.ativo { background: #1e2430; color: #fff; font-weight: 600; border-color: #2a3140; }
   .status-card {
@@ -48,7 +46,7 @@
   }
   .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px rgba(34,197,94,.7); }
   .status-titulo { font-size: 13px; font-weight: 600; }
-  .status-sub { font-size: 11px; color: var(--texto2); margin-top: 2px; }
+  .status-sub { font-size: 12px; color: var(--texto2); margin-top: 2px; }
 
   .conteudo { flex: 1; padding: 26px 32px 34px; max-width: 1240px; }
   .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -68,9 +66,13 @@
   .perfil .pnome { font-size: 13px; font-weight: 600; }
   button {
     background: var(--azul); color: #fff; border: 0; padding: 10px 18px;
-    border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s;
+    border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s, transform .12s ease;
+    display: inline-flex; align-items: center; gap: 8px; font-family: inherit;
   }
+  button svg { width: 15px; height: 15px; }
   button:hover { background: #2563eb; }
+  button:active { transform: scale(.97); }
   button:disabled { opacity: .6; cursor: wait; }
   button.link { background: transparent; color: var(--azul); padding: 4px 8px; font-size: 13px; }
   button.link:hover { background: rgba(59,130,246,.12); }
@@ -81,20 +83,48 @@
   .linha-filtro label { color: var(--texto2); font-size: 13px; }
   select {
     background: var(--card); color: var(--texto); border: 1px solid var(--borda);
-    border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 600;
+    border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 600;
     cursor: pointer; font-family: inherit;
   }
   select:focus { outline: none; border-color: var(--azul); }
 
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  /* ===== Bento: hero 2x + cards 1x em xadrez ===== */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
   .card { background: var(--card); border: 1px solid var(--borda); border-radius: 16px; padding: 18px; }
-  .card .label { color: var(--texto2); font-size: 12.5px; margin-bottom: 8px; }
+  .cards .card { transition: transform .12s ease; }
+  .cards .card:active { transform: scale(.985); }
+  .card.hero, .card.inv-wide { grid-column: span 2; }
+  .card .label {
+    color: var(--texto2); font-size: 12px; margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
   .card .value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
   .card .sub { color: var(--texto2); font-size: 12px; margin-top: 8px; }
   .card .variacao { font-size: 12px; margin-top: 6px; font-weight: 600; }
   .positivo { color: var(--verde); }
   .negativo { color: var(--vermelho); }
   .neutro { color: var(--texto); }
+
+  .card.hero {
+    background: linear-gradient(135deg, #161d28 0%, #13161c 100%);
+    border-color: #2a3140;
+    display: flex; flex-direction: column;
+  }
+  .card.hero .value { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; }
+  .spark-box { height: 56px; margin-top: auto; padding-top: 10px; }
+  .spark-leg { color: var(--texto3); font-size: 12px; margin-top: 4px; }
+
+  /* ===== Skeleton loading ===== */
+  .sk {
+    border-radius: 6px;
+    background: linear-gradient(90deg, #1e222b 25%, #262b36 50%, #1e222b 75%);
+    background-size: 200% 100%;
+    animation: sk 1.2s infinite;
+  }
+  @keyframes sk { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .sk-l { width: 45%; height: 12px; margin-bottom: 12px; }
+  .sk-v { width: 70%; height: 26px; margin-bottom: 12px; }
+  .sk-s { width: 90%; height: 10px; }
 
   .grid2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; margin-bottom: 20px; }
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
@@ -103,14 +133,17 @@
   .painel h2 { font-size: 15px; font-weight: 600; color: #f3f4f6; }
   .painel .desc { color: var(--texto2); font-size: 12px; margin-bottom: 16px; }
   .mini { padding: 16px 18px; }
-  .mini .label { color: var(--texto2); font-size: 12px; margin-bottom: 6px; }
+  .mini .label {
+    color: var(--texto2); font-size: 12px; margin-bottom: 6px;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
   .mini .value { font-size: 20px; font-weight: 700; }
   .mini .sub { color: var(--texto2); font-size: 12px; margin-top: 6px; }
 
   .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
   .tab {
     padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
-    color: var(--texto2); background: transparent; border: 1px solid transparent;
+    color: var(--texto2); background: transparent; border: 1px solid transparent; font-family: inherit;
   }
   .tab:hover { color: var(--texto); }
   .tab.ativo { background: #1e2430; color: #fff; font-weight: 600; border-color: #2a3140; }
@@ -119,17 +152,17 @@
     text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
     color: var(--texto3); padding: 8px 10px; border-bottom: 1px solid var(--borda);
   }
-  tbody td { padding: 11px 10px; border-bottom: 1px solid #1c2029; font-size: 13.5px; }
+  tbody td { padding: 11px 10px; border-bottom: 1px solid #1c2029; font-size: 13px; }
   tbody tr:last-child td { border-bottom: 0; }
   tbody tr:hover { background: #191d26; }
   .icone-cat {
-    width: 34px; height: 34px; border-radius: 9px; background: #232833;
-    display: inline-flex; align-items: center; justify-content: center; font-size: 15px;
+    width: 34px; height: 34px; border-radius: 9px; background: #232833; color: var(--texto2);
+    display: inline-flex; align-items: center; justify-content: center;
   }
+  .icone-cat svg { width: 16px; height: 16px; }
   .cat-nome { font-weight: 600; color: #f3f4f6; }
   .cat-sub { color: var(--texto3); font-size: 12px; margin-top: 2px; }
 
-  /* Números tabulares: alinha colunas e evita quebra nos cards 2x2 do mobile */
   .card .value, .mini .value, .inv-valor, .cat-valor, .inv-inst-valor .v, tbody td {
     font-variant-numeric: tabular-nums;
   }
@@ -142,7 +175,7 @@
     align-items: center; justify-content: center; pointer-events: none; text-align: center;
   }
   .rosca-center .total { font-size: 18px; font-weight: 700; }
-  .rosca-center .leg { font-size: 11px; color: var(--texto2); margin-top: 2px; }
+  .rosca-center .leg { font-size: 12px; color: var(--texto2); margin-top: 2px; }
   .legenda { flex: 1; display: grid; grid-template-columns: 1fr; gap: 7px; }
   .legenda .l { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; }
   .legenda .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
@@ -151,11 +184,11 @@
   .cat-linha { display: flex; align-items: center; gap: 14px; padding: 13px 4px; border-bottom: 1px solid #1c2029; }
   .cat-linha:last-child { border-bottom: 0; }
   .cat-info { width: 160px; flex-shrink: 0; }
-  .cat-info .nome { font-weight: 600; font-size: 14px; }
+  .cat-info .nome { font-weight: 600; font-size: 15px; }
   .cat-info .sub { color: var(--texto3); font-size: 12px; margin-top: 2px; }
   .cat-barra { flex: 1; height: 8px; background: #232833; border-radius: 4px; overflow: hidden; }
   .cat-barra .fill { height: 100%; border-radius: 4px; }
-  .cat-valor { width: 130px; text-align: right; font-weight: 700; font-size: 14px; }
+  .cat-valor { width: 130px; text-align: right; font-weight: 700; font-size: 15px; }
   .cat-pct { width: 60px; text-align: right; color: var(--texto2); font-size: 13px; }
 
   /* ===== Investimentos ===== */
@@ -168,10 +201,8 @@
     margin-bottom: 20px;
   }
   .inv-patrimonio .label { color: var(--texto2); font-size: 13px; margin-bottom: 8px; }
-  .inv-patrimonio .valor {
-    font-size: 34px; font-weight: 800; letter-spacing: -0.03em; color: #fff;
-  }
-  .inv-patrimonio .sub { color: var(--texto2); font-size: 12.5px; margin-top: 6px; }
+  .inv-patrimonio .valor { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
+  .inv-patrimonio .sub { color: var(--texto2); font-size: 12px; margin-top: 6px; }
 
   .inv-grid {
     display: grid;
@@ -187,10 +218,11 @@
   .inv-card-topo { display: flex; align-items: center; gap: 12px; }
   .inv-icone {
     width: 40px; height: 40px; border-radius: 11px;
-    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .inv-titulo { font-weight: 700; font-size: 14.5px; color: #f3f4f6; }
+  .inv-icone svg { width: 20px; height: 20px; }
+  .inv-titulo { font-weight: 700; font-size: 15px; color: #f3f4f6; }
   .inv-sub { color: var(--texto2); font-size: 12px; margin-top: 2px; }
   .inv-badge {
     margin-left: auto;
@@ -200,11 +232,9 @@
     color: #f3f4f6;
     white-space: nowrap;
   }
-  .inv-valor { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+  .inv-valor { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
   .inv-barra-linha { display: flex; align-items: center; gap: 10px; }
-  .inv-barra {
-    flex: 1; height: 7px; background: #232833; border-radius: 4px; overflow: hidden;
-  }
+  .inv-barra { flex: 1; height: 7px; background: #232833; border-radius: 4px; overflow: hidden; }
   .inv-barra .fill { height: 100%; border-radius: 4px; }
   .inv-aloc { color: var(--texto2); font-size: 12px; font-weight: 600; white-space: nowrap; }
 
@@ -238,8 +268,8 @@
     color: var(--texto3); font-size: 12px;
     display: flex; align-items: center; gap: 8px;
   }
+  .inv-footer svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-  /* ===== Instituições (montante investido por banco) ===== */
   .inv-inst {
     background: var(--card); border: 1px solid var(--borda);
     border-radius: 16px; padding: 22px 24px; margin-bottom: 20px;
@@ -252,20 +282,21 @@
   }
   .inv-inst-linha:last-child { border-bottom: 0; }
   .inv-inst-info { width: 200px; flex-shrink: 0; }
-  .inv-inst-info .nome { font-weight: 600; font-size: 14px; color: #f3f4f6; }
+  .inv-inst-info .nome { font-weight: 600; font-size: 15px; color: #f3f4f6; }
   .inv-inst-info .sub { color: var(--texto3); font-size: 12px; margin-top: 2px; }
   .inv-inst-barra { flex: 1; height: 8px; background: #232833; border-radius: 4px; overflow: hidden; }
   .inv-inst-barra .fill { height: 100%; border-radius: 4px; }
   .inv-inst-valor { width: 150px; text-align: right; }
-  .inv-inst-valor .v { font-weight: 700; font-size: 14.5px; color: #fff; }
-  .inv-inst-valor .p { color: var(--verde); font-size: 12.5px; font-weight: 600; margin-top: 2px; }
+  .inv-inst-valor .v { font-weight: 700; font-size: 15px; color: #fff; }
+  .inv-inst-valor .p { color: var(--verde); font-size: 12px; font-weight: 600; margin-top: 2px; }
 
   .rodape { margin-top: 26px; text-align: center; color: var(--texto3); font-size: 12px; }
-  .vazio { color: var(--texto2); text-align: center; padding: 30px 12px; font-size: 13.5px; }
+  .vazio { color: var(--texto2); text-align: center; padding: 30px 12px; font-size: 13px; }
   .aviso {
     background: #1a1f2b; border: 1px solid #2a3140; border-radius: 12px;
     padding: 14px 16px; color: var(--texto2); font-size: 13px; display: flex; gap: 10px; align-items: flex-start;
   }
+  .aviso svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
 
   /* ===== Modal de orçamento ===== */
   .modal-fundo {
@@ -279,18 +310,17 @@
     border-radius: 16px; padding: 22px; width: 100%; max-width: 380px;
     display: flex; flex-direction: column; gap: 10px;
   }
-  .modal h3 { font-size: 16px; }
-  .modal label { color: var(--texto2); font-size: 12.5px; margin-top: 4px; }
+  .modal h3 { font-size: 15px; }
+  .modal label { color: var(--texto2); font-size: 12px; margin-top: 4px; }
   .modal input, .modal select {
     background: var(--bg2); color: var(--texto); border: 1px solid var(--borda);
-    border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+    border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: inherit;
   }
   .modal input:focus, .modal select:focus { outline: none; border-color: var(--azul); }
   .modal-acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
   .btn-sec { background: #232833; }
   .btn-sec:hover { background: #2c323f; }
 
-  /* Linhas do orçamento com ações */
   .orc-linha {
     display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     padding: 12px 4px; border-bottom: 1px solid #1c2029;
@@ -299,9 +329,11 @@
   .cat-acoes { display: flex; gap: 6px; margin-left: auto; }
   .btn-mini {
     background: #232833; border: 1px solid var(--borda); color: var(--texto2);
-    padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+    padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+    min-height: 36px; font-family: inherit; transition: color .15s, background .15s, transform .12s ease;
   }
   .btn-mini:hover { color: var(--texto); background: #2c323f; }
+  .btn-mini:active { transform: scale(.95); }
   .btn-mini.perigo:hover { color: var(--vermelho); border-color: var(--vermelho); }
 
   .secao { display: none; }
@@ -324,16 +356,18 @@
     .conteudo { padding: 16px 14px 96px; }
 
     .topo { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
-    .topo h1 { font-size: 21px; }
+    .topo h1 { font-size: 24px; }
     .acoes { width: 100%; justify-content: space-between; }
 
     .linha-filtro { gap: 10px; }
-    .linha-filtro select { flex: 1; min-width: 0; width: 100%; font-size: 16px; }
+    .linha-filtro select { flex: 1; min-width: 0; width: 100%; font-size: 13px; }
 
-    .cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    /* Bento no mobile: hero e investimentos ocupam a linha inteira */
+    .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
     .card { padding: 14px; }
     .card .value { font-size: 20px; }
-    .card .sub { font-size: 11px; }
+    .card .sub { font-size: 12px; }
+    .card.hero .value { font-size: 28px; }
 
     .grid2, .grid3 { grid-template-columns: 1fr; gap: 12px; }
     .painel { padding: 16px; }
@@ -360,6 +394,9 @@
     .inv-inst-info { width: 110px; }
     .inv-inst-valor { width: 106px; }
     .inv-inst-linha { gap: 8px; }
+
+    /* Alvos de toque confortáveis */
+    .btn-mini { min-height: 44px; padding: 10px 14px; }
 
     .bottom-nav {
       display: flex;
@@ -388,20 +425,16 @@
       justify-content: center;
       border-radius: 14px;
       color: var(--texto2);
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 500;
       transition: color .2s ease, background .2s ease, transform .15s ease;
     }
     .bottom-nav .nav-item:hover { background: transparent; }
     .bottom-nav .nav-item:active { transform: scale(.93); }
-    .bottom-nav .nav-item .nav-emoji {
-      font-size: 21px;
-      line-height: 1;
-      filter: grayscale(1) opacity(.75);
-      transition: filter .2s ease, transform .2s ease;
-    }
+    .bottom-nav .nav-ico { display: flex; justify-content: center; }
+    .bottom-nav .nav-ico svg { width: 22px; height: 22px; }
     .bottom-nav .nav-item span:last-child {
-      font-size: 10.5px;
+      font-size: 11px;
       line-height: 1.15;
       letter-spacing: .01em;
     }
@@ -410,10 +443,6 @@
       background: rgba(34, 197, 94, 0.10);
       border-color: transparent;
       font-weight: 700;
-    }
-    .bottom-nav .nav-item.ativo .nav-emoji {
-      filter: none;
-      transform: translateY(-1px);
     }
     .bottom-nav .nav-item.ativo::after {
       content: "";
@@ -453,11 +482,26 @@
       <div class="nome">Fini</div>
     </div>
     <nav>
-      <div class="nav-item ativo" data-alvo="visao">🏠 Visão Geral</div>
-      <div class="nav-item" data-alvo="transacoes">💳 Transações</div>
-      <div class="nav-item" data-alvo="faturas">🧾 Faturas</div>
-      <div class="nav-item" data-alvo="investimentos">📈 Investimentos</div>
-      <div class="nav-item" data-alvo="categorias">🏷️ Categorias</div>
+      <div class="nav-item ativo" data-alvo="visao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Visão Geral</span>
+      </div>
+      <div class="nav-item" data-alvo="transacoes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        <span>Transações</span>
+      </div>
+      <div class="nav-item" data-alvo="faturas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg>
+        <span>Faturas</span>
+      </div>
+      <div class="nav-item" data-alvo="investimentos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        <span>Investimentos</span>
+      </div>
+      <div class="nav-item" data-alvo="categorias">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+        <span>Categorias</span>
+      </div>
     </nav>
     <div class="status-card">
       <div class="status-dot"></div>
@@ -475,7 +519,10 @@
         <div class="subtitulo" id="saudacao"></div>
       </div>
       <div class="acoes">
-        <button id="btnSync">⚡ Sincronizar agora</button>
+        <button id="btnSync">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span id="btnSyncTxt">Sincronizar agora</span>
+        </button>
         <div class="perfil"><div class="avatar">G</div><div class="pnome">Gabriel</div></div>
       </div>
     </header>
@@ -558,11 +605,26 @@
 
 <!-- Barra de navegação inferior (mobile) -->
 <nav class="bottom-nav">
-  <div class="nav-item ativo" data-alvo="visao"><span class="nav-emoji">🏠</span><span>Início</span></div>
-  <div class="nav-item" data-alvo="transacoes"><span class="nav-emoji">💳</span><span>Movimentos</span></div>
-  <div class="nav-item" data-alvo="faturas"><span class="nav-emoji">🧾</span><span>Faturas</span></div>
-  <div class="nav-item" data-alvo="investimentos"><span class="nav-emoji">📈</span><span>Investir</span></div>
-  <div class="nav-item" data-alvo="categorias"><span class="nav-emoji">🏷️</span><span>Categorias</span></div>
+  <div class="nav-item ativo" data-alvo="visao">
+    <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+    <span>Início</span>
+  </div>
+  <div class="nav-item" data-alvo="transacoes">
+    <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></span>
+    <span>Movimentos</span>
+  </div>
+  <div class="nav-item" data-alvo="faturas">
+    <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg></span>
+    <span>Faturas</span>
+  </div>
+  <div class="nav-item" data-alvo="investimentos">
+    <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+    <span>Investir</span>
+  </div>
+  <div class="nav-item" data-alvo="categorias">
+    <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></span>
+    <span>Categorias</span>
+  </div>
 </nav>
 
 <!-- Modal de orçamento -->
@@ -581,24 +643,68 @@
 </div>
 
 <script>
+// ===== Ícones SVG (estilo Lucide, stroke currentColor) =====
+const P = {
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  utensils: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+  tv: '<rect width="20" height="15" x="2" y="3" rx="2"/><polyline points="8 21 12 17 16 21"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
+  popcorn: '<path d="M18 8a2 2 0 0 0 0-4 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0-4 0 2 2 0 0 0 0 4"/><path d="M10.22 6 12 19l1.78-13"/><path d="M4.32 6H19.68a1 1 0 0 1 .98 1.2l-2.35 11.76a2.5 2.5 0 0 1-2.45 2H8.14a2.5 2.5 0 0 1-2.45-2L3.34 7.2a1 1 0 0 1 .98-1.2Z"/>',
+  cap: '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  swap: '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
+  dots: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
+  trend: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  bars: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  package: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  landmark: '<line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+  coins: '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
+  layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+};
+const svg = (paths, size = 16) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
+// Ícone por categoria (SVG em vez de emoji)
+const IC = {
+  "Moradia": P.home,
+  "Alimentação": P.utensils,
+  "Transporte": P.car,
+  "Assinaturas": P.tv,
+  "Saúde": P.heart,
+  "Lazer": P.popcorn,
+  "Educação": P.cap,
+  "Compras": P.bag,
+  "Serviços": P.wrench,
+  "Transferências": P.swap,
+  "Outros": P.dots,
+};
+const iconeCat = (cat, size = 16) => svg(IC[cat] || IC["Outros"], size);
+
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const MESES_CURTOS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const fmt = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtCompact = (v) => (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 });
-const PALETA = ["#f43f5e", "#f472b6", "#a78bfa", "#818cf8", "#38bdf8", "#34d399", "#fbbf24", "#fb923c", "#22d3ee", "#fda4af"];
-// Paleta de categorias SEM vermelho/rosa: reserva o vermelho apenas para valores negativos (saídas)
-const PALETA_CAT = ["#34d399", "#2dd4bf", "#38bdf8", "#818cf8", "#a78bfa", "#fbbf24", "#fb923c", "#22d3ee", "#a3e635", "#94a3b8"];
-const ICONE_CAT = { "Moradia":"🏠", "Alimentação":"🍔", "Transporte":"🚗", "Assinaturas":"🎬", "Saúde":"💊", "Lazer":"🍿", "Educação":"🎓", "Compras":"🛍️", "Serviços":"🛠️", "Transferências":"🔄", "Outros":"📌" };
+
+// Paleta calma: variações de verde/teal/azul + cinza. Vermelho fica reservado para valores negativos.
+const PALETA_CAT = ["#34d399", "#2dd4bf", "#38bdf8", "#0ea5e9", "#14b8a6", "#22d3ee", "#4ade80", "#5eead4", "#67e8f9", "#94a3b8"];
+
 const mesesLongos = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 
+// Classes de investimento com ícones SVG e cores da paleta calma
 const INV_CLASSES = [
-  { chave: "Fundo Imobiliário", icone: "🏢", cor: "#8b5cf6", tipos: ["FII", "FUNDO IMOBILIARIO", "REIT"] },
-  { chave: "Ações", icone: "📈", cor: "#3b82f6", tipos: ["STOCK", "ACAO", "AÇÃO", "ACOES", "EQUITY", "BDR", "SHARES", "EQUITIES"] },
-  { chave: "Fundo de Renda Fixa", icone: "📊", cor: "#06b6d4", tipos: ["FUNDO DE RENDA FIXA", "FUNDO RENDA FIXA", "FIXED INCOME FUND", "MUTUAL FUND", "FUNDO", "FUND"] },
-  { chave: "ETF", icone: "📦", cor: "#38bdf8", tipos: ["ETF", "EXCHANGE TRADED FUND", "EXCHANGE TRADED"] },
-  { chave: "Tesouro", icone: "🏛️", cor: "#f59e0b", tipos: ["TESOURO", "TREASURY", "LTN", "NTN", "LFT"] },
-  { chave: "CDB", icone: "🏦", cor: "#10b981", tipos: ["CDB", "LCI", "LCA", "CRI", "CRA", "DEBENTURE", "BOND", "POUPANÇA", "POUPANCA"] },
-  { chave: "Criptoativos", icone: "🪙", cor: "#f59e0b", tipos: ["CRYPTO", "CRIPTO", "BITCOIN", "BTC", "ETHEREUM", "ETH"] },
+  { chave: "Fundo Imobiliário", ico: P.building, cor: "#2dd4bf", tipos: ["FII", "FUNDO IMOBILIARIO", "REIT"] },
+  { chave: "Ações", ico: P.trend, cor: "#38bdf8", tipos: ["STOCK", "ACAO", "AÇÃO", "ACOES", "EQUITY", "BDR", "SHARES", "EQUITIES"] },
+  { chave: "Fundo de Renda Fixa", ico: P.bars, cor: "#22d3ee", tipos: ["FUNDO DE RENDA FIXA", "FUNDO RENDA FIXA", "FIXED INCOME FUND", "MUTUAL FUND", "FUNDO", "FUND"] },
+  { chave: "ETF", ico: P.package, cor: "#34d399", tipos: ["ETF", "EXCHANGE TRADED FUND", "EXCHANGE TRADED"] },
+  { chave: "Tesouro", ico: P.shield, cor: "#4ade80", tipos: ["TESOURO", "TREASURY", "LTN", "NTN", "LFT"] },
+  { chave: "CDB", ico: P.landmark, cor: "#0ea5e9", tipos: ["CDB", "LCI", "LCA", "CRI", "CRA", "DEBENTURE", "BOND", "POUPANÇA", "POUPANCA"] },
+  { chave: "Criptoativos", ico: P.coins, cor: "#5eead4", tipos: ["CRYPTO", "CRIPTO", "BITCOIN", "BTC", "ETHEREUM", "ETH"] },
 ];
 
 function classificarInvestimento(inv) {
@@ -623,7 +729,7 @@ function classificarInvestimento(inv) {
     const c = INV_CLASSES.find(x => x.chave === chave);
     if (c && c.tipos.some(x => alvo.includes(x))) return c;
   }
-  return { chave: "Outros", icone: "📦", cor: "#64748b", tipos: [] };
+  return { chave: "Outros", ico: P.layers, cor: "#94a3b8", tipos: [] };
 }
 
 const hora = new Date().getHours();
@@ -661,7 +767,6 @@ function variacao(atual, anterior) {
   if (!anterior) return null;
   return ((atual - anterior) / anterior) * 100;
 }
-// Linha de variação para os cards. invertido=true quando "subir é ruim" (saídas).
 function linhaVariacao(varPct, invertido) {
   if (varPct === null || varPct === undefined || !isFinite(varPct)) return "";
   const bom = invertido ? varPct < 0 : varPct > 0;
@@ -669,20 +774,37 @@ function linhaVariacao(varPct, invertido) {
   return `<div class="variacao ${bom ? "positivo" : "negativo"}">${seta} ${pctTxt(varPct)} vs mês anterior</div>`;
 }
 
-// Navegação entre seções (menu lateral + barra inferior)
+// Contadores animados: os valores "sobem" de 0 até o número real
+function animarContadores() {
+  document.querySelectorAll("#cards .value[data-valor]").forEach((el) => {
+    const alvo = parseFloat(el.dataset.valor);
+    if (!isFinite(alvo)) return;
+    const inicio = performance.now(), dur = 600;
+    function passo(t) {
+      const k = Math.min(1, (t - inicio) / dur);
+      const ease = 1 - Math.pow(1 - k, 3);
+      el.textContent = fmtCompact(alvo * ease);
+      if (k < 1) requestAnimationFrame(passo);
+    }
+    requestAnimationFrame(passo);
+  });
+}
+
+// Navegação entre seções (menu lateral + barra inferior sincronizados)
+const TITULOS = { visao: "Visão Geral", transacoes: "Transações", faturas: "Faturas", investimentos: "Investimentos", categorias: "Categorias" };
 document.querySelectorAll(".nav-item").forEach((el) => {
   el.addEventListener("click", () => {
-    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("ativo"));
-    el.classList.add("ativo");
+    const alvo = el.dataset.alvo;
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("ativo", n.dataset.alvo === alvo));
     document.querySelectorAll(".secao").forEach(s => s.classList.remove("ativa"));
-    document.getElementById(el.dataset.alvo).classList.add("ativa");
-    document.getElementById("tituloPagina").textContent = el.textContent.replace(/[🏠💳🧾📈🏷️]/g, "").trim();
+    document.getElementById(alvo).classList.add("ativa");
+    document.getElementById("tituloPagina").textContent = TITULOS[alvo] || alvo;
+    window.scrollTo({ top: 0, behavior: "smooth" });
     // Gráfico de patrimônio renderiza na 1ª abertura da aba (evita canvas em seção oculta)
-    if (el.dataset.alvo === "investimentos") renderGraficoPatrimonio();
+    if (alvo === "investimentos") renderGraficoPatrimonio();
   });
 });
 
-// Tabela de transações (reutilizável)
 function montarTabela(tx, filtro) {
   const lista = filtro === "entradas" ? tx.filter(t => t.amount > 0)
               : filtro === "saidas" ? tx.filter(t => t.amount < 0) : tx;
@@ -692,13 +814,12 @@ function montarTabela(tx, filtro) {
     <tbody>
       ${lista.map(t => {
         const data = fmtData(t.date);
-        const icone = ICONE_CAT[t.category] || "📌";
         const valor = t.amount >= 0
           ? `<span class="positivo">+${fmt(t.amount)}</span>`
           : `<span class="negativo">${fmt(t.amount)}</span>`;
         return `<tr>
           <td style="color:var(--texto2);white-space:nowrap">${data}</td>
-          <td><span class="icone-cat">${icone}</span></td>
+          <td><span class="icone-cat">${iconeCat(t.category)}</span></td>
           <td><div class="cat-nome">${t.merchant || t.description || "Sem descrição"}</div><div class="cat-sub">${t.category}</div></td>
           <td style="text-align:right;font-weight:600;white-space:nowrap">${valor}</td>
         </tr>`;
@@ -707,7 +828,6 @@ function montarTabela(tx, filtro) {
   </table>`;
 }
 
-// Tabela de compras parceladas
 function montarTabelaParcelas(parcs) {
   if (!parcs.length) return `<div class="vazio">Nenhuma compra parcelada em aberto.</div>`;
   return `<table>
@@ -736,10 +856,10 @@ let dadosMensais = [];
 let graficoFluxo = null;
 let graficoRosca = null;
 let graficoPatrimonio = null;
+let graficoSpark = null;
 let wealthCache = [];
 let patrimonioRenderado = false;
 
-// Monta o seletor de meses do ano vigente (com dados) e define o mês padrão
 function montarSeletor(monthlyAno) {
   const sel = document.getElementById("seletorMes");
   const mesesComDados = monthlyAno.map(m => m.mes).sort();
@@ -757,6 +877,10 @@ function montarSeletor(monthlyAno) {
 
 async function carregarVisao() {
   try {
+    // Skeleton enquanto carrega
+    document.getElementById("cards").innerHTML =
+      Array(4).fill(`<div class="card"><div class="sk sk-l"></div><div class="sk sk-v"></div><div class="sk sk-s"></div></div>`).join("");
+
     const anoAtual = new Date().getFullYear();
 
     const [monthlyAno, melhores, saldoRes, invRes, invInst, wealthHist] = await Promise.all([
@@ -852,7 +976,6 @@ async function carregarCardsMes() {
   const saldoRes = await fetch("/api/saldo").then(r => r.json());
   const invRes = await fetch("/api/investimentos").then(r => r.json());
 
-  // Variação vs mês anterior (a partir dos dados mensais do ano)
   const idx = dadosMensais.findIndex(m => m.mes === mesSelecionado);
   const mesAnterior = idx > 0 ? dadosMensais[idx - 1] : null;
   const varGanhos = mesAnterior && mesAnterior.ganhos ? variacao(insights.ganhos, mesAnterior.ganhos) : null;
@@ -866,28 +989,54 @@ async function carregarCardsMes() {
     const invTotal = invRes.reduce((s, x) => s + (x.balance || 0), 0);
     const receitaComprometida = i.ganhos > 0 ? Math.round((i.gastos / i.ganhos) * 100) : 0;
     cards.innerHTML = `
-      <div class="card">
+      <div class="card hero">
         <div class="label">Saldo Total</div>
-        <div class="value ${saldoRes.total >= 0 ? "positivo" : "negativo"}">${fmtCompact(saldoRes.total)}</div>
+        <div class="value ${saldoRes.total >= 0 ? "positivo" : "negativo"}" data-valor="${saldoRes.total}">${fmtCompact(saldoRes.total)}</div>
         <div class="sub">Disponível em contas correntes</div>
+        <div class="spark-box"><canvas id="sparkSaldo"></canvas></div>
+        <div class="spark-leg">Poupança mensal (entradas − saídas)</div>
       </div>
       <div class="card">
         <div class="label">Entradas · ${mesNome(i.mes)}</div>
-        <div class="value positivo">${fmtCompact(i.ganhos)}</div>
+        <div class="value positivo" data-valor="${i.ganhos}">${fmtCompact(i.ganhos)}</div>
         ${linhaVariacao(varGanhos, false)}
         <div class="sub">Total recebido no mês</div>
       </div>
       <div class="card">
         <div class="label">Saídas · ${mesNome(i.mes)}</div>
-        <div class="value negativo">${fmtCompact(i.gastos)}</div>
+        <div class="value negativo" data-valor="${i.gastos}">${fmtCompact(i.gastos)}</div>
         ${linhaVariacao(varGastos, true)}
         <div class="sub">${receitaComprometida}% da receita comprometida</div>
       </div>
-      <div class="card">
+      <div class="card inv-wide">
         <div class="label">Investimentos</div>
         <div class="value neutro">${invTotal ? fmtCompact(invTotal) : "—"}</div>
         <div class="sub">${invRes.length ? invRes.length + " ativo(s) pela conexão" : "Seu banco não expõe investimentos"}</div>
       </div>`;
+
+    animarContadores();
+
+    // Mini gráfico de poupança mensal no card hero
+    const sparkCanvas = document.getElementById("sparkSaldo");
+    if (sparkCanvas && dadosMensais.length) {
+      const serie = [...dadosMensais].reverse().map(m => (m.ganhos || 0) - (m.gastos || 0));
+      if (graficoSpark) graficoSpark.destroy();
+      graficoSpark = new Chart(sparkCanvas, {
+        type: "line",
+        data: {
+          labels: serie.map((_, idx2) => idx2),
+          datasets: [{
+            data: serie, borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,.12)",
+            fill: true, tension: .4, pointRadius: 0, borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { display: false } },
+        },
+      });
+    }
   }
 
   const rank = await fetch(`/api/ranking/${mesSelecionado}`).then(r => r.json());
@@ -939,7 +1088,7 @@ async function carregarCategorias(mes) {
       const pctTxt2 = pct < 1 ? "—" : pct + "%";
       return `
       <div class="cat-linha">
-        <div class="icone-cat">${ICONE_CAT[r.category] || "📌"}</div>
+        <div class="icone-cat">${iconeCat(r.category)}</div>
         <div class="cat-info"><div class="nome">${r.category}</div></div>
         ${barra}
         <div class="cat-valor negativo">${fmt(r.total)}</div>
@@ -1005,7 +1154,7 @@ async function abrirModalOrcamento(categoria = null, limite = null) {
   const cats = new Set([
     ...rank.map(r => r.category),
     ...budgets.map(b => b.category),
-    ...Object.keys(ICONE_CAT),
+    ...Object.keys(IC),
   ]);
   const sel = document.getElementById("orcCategoria");
   sel.innerHTML = [...cats].sort((a, b) => a.localeCompare(b, "pt-BR")).map(c =>
@@ -1117,7 +1266,7 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
       return `
         <div class="inv-card">
           <div class="inv-card-topo">
-            <div class="inv-icone" style="background:${c.cor}22">${c.icone}</div>
+            <div class="inv-icone" style="background:${c.cor}22;color:${c.cor}">${svg(c.ico, 20)}</div>
             <div>
               <div class="inv-titulo">${c.chave}</div>
               <div class="inv-sub">${c.n} ativo(s)</div>
@@ -1134,7 +1283,7 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
   } else {
     grid = `
       <div class="painel">
-        <div class="aviso">ℹ️ Nenhum investimento disponível pela sua conexão. Seu banco pode não expor esse produto via Pluggy — a estrutura está pronta para quando houver dados.</div>
+        <div class="aviso">${svg(P.info, 16)} Nenhum investimento disponível pela sua conexão. Seu banco pode não expor esse produto via Pluggy — a estrutura está pronta para quando houver dados.</div>
       </div>`;
   }
 
@@ -1176,7 +1325,7 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
   }
 
   container.innerHTML = header + grid + dist + wealthHtml + renderInstituicoes(invInst) + `
-    <div class="inv-footer">🔒 Dados sincronizados do Pluggy via Open Finance Brasil</div>`;
+    <div class="inv-footer">${svg(P.lock, 14)} Dados sincronizados do Pluggy via Open Finance Brasil</div>`;
 
   // Se o usuário já estiver na aba Investimentos, renderiza o gráfico agora
   if (document.getElementById("investimentos").classList.contains("ativa")) {
@@ -1184,7 +1333,6 @@ function renderInvestimentos(invRes, invInst, wealthHist = []) {
   }
 }
 
-// Gráfico de evolução do patrimônio (renderiza na 1ª abertura da aba)
 function renderGraficoPatrimonio() {
   if (patrimonioRenderado || wealthCache.length < 2) return;
   const canvas = document.getElementById("graficoPatrimonio");
@@ -1211,7 +1359,6 @@ function renderGraficoPatrimonio() {
   patrimonioRenderado = true;
 }
 
-// Tabela de instituições: mostra o montante INVESTIDO por banco
 function renderInstituicoes(invInst) {
   const insts = invInst || [];
   if (!insts.length) return "";
@@ -1266,7 +1413,8 @@ document.getElementById("btnVerTodas").addEventListener("click", async () => {
 
 document.getElementById("btnSync").addEventListener("click", async () => {
   const btn = document.getElementById("btnSync");
-  btn.disabled = true; btn.textContent = "Sincronizando…";
+  btn.disabled = true;
+  document.getElementById("btnSyncTxt").textContent = "Sincronizando…";
   await fetch("/api/sync", { method: "POST" });
   location.reload();
 });
