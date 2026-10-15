@@ -8,6 +8,7 @@ const { sync } = require("./sync");
 const { monthly, ranking, assinaturas, insights, melhores, saldoTotal, transacoesRecentes, investimentos, investimentosPorInstituicao, faturas, parcelas, syncInfo } = require("./analyze");
 const db = require("./db");
 const registerFeatures = require("./features");
+const registerCobrancas = require("./cobrancas");
 
 const app = Fastify();
 app.register(cors, { origin: true });
@@ -42,6 +43,9 @@ app.get("/api/perfil", () => {
 
 // ===== Features: orçamento por categoria + histórico de patrimônio =====
 const registrarSnapshot = registerFeatures(app, db, { saldoTotal, investimentos });
+
+// ===== Cobranças: aba independente de controle de clientes =====
+registerCobrancas(app, db);
 
 async function runSync() {
   try {
