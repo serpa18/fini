@@ -838,8 +838,9 @@
     <h3 id="cobModalTitulo">Novo cliente</h3>
     <label>Nome do cliente</label>
     <input type="text" id="cobNome" placeholder="Ex.: Empresa X">
-    <label>Valor do contrato mensal (R$)</label>
+    <label>Valor base do contrato (R$)</label>
     <input type="number" id="cobValor" min="0" step="0.01" placeholder="Ex.: 1500">
+    <div class="desc" style="margin:-4px 0 0;font-size:11.5px">Vale para os meses sem valor específico. Para alterar um mês só, use "Alterar valor" na tabela.</div>
     <label>Dia da cobrança (1–31)</label>
     <input type="number" id="cobDia" min="1" max="31" placeholder="Ex.: 10">
     <label>Vencimento do contrato</label>
@@ -858,18 +859,26 @@
   </div>
 </div>
 
-<!-- Modal de adicionar valor (cobranças) -->
+<!-- Modal de alterar valor do mês (cobranças) -->
 <div class="modal-fundo" id="modalCobValor">
   <div class="modal">
-    <h3 id="cobValorTitulo">Adicionar valor</h3>
+    <h3 id="cobValorTitulo">Alterar valor do mês</h3>
     <div class="subtitulo" id="cobValorCliente" style="margin-top:-4px"></div>
-    <label>Valor a somar (R$) — use negativo para reduzir</label>
-    <input type="number" id="cobValorAdd" step="0.01" placeholder="Ex.: 250">
+    <label>Novo valor em <span id="cobValorMes">este mês</span> (R$)</label>
+    <input type="number" id="cobValorAdd" min="0" step="0.01" placeholder="Ex.: 1250">
+    <div class="desc" id="cobValorDiff" style="margin:-4px 0 0;font-size:11.5px"></div>
+    <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;cursor:pointer">
+      <input type="checkbox" id="cobReajuste" style="margin-top:2px">
+      <span>
+        <b style="color:var(--texto);font-weight:600">Reajuste de mensalidade</b><br>
+        <span style="color:var(--texto2);font-size:11.5px">Aplica deste mês em diante. Desmarcado, altera <b>apenas este mês</b>.</span>
+      </span>
+    </label>
     <label>Motivo (opcional)</label>
     <input type="text" id="cobValorMotivo" placeholder="Ex.: serviço extra de março">
     <div class="modal-acoes">
       <button class="btn-sec" id="cobValorCancelar">Cancelar</button>
-      <button id="cobValorSalvar">Somar</button>
+      <button id="cobValorSalvar">Salvar</button>
     </div>
   </div>
 </div>
@@ -1861,7 +1870,7 @@ function renderCobResumo(resumo) {
     <div class="painel mini">
       <div class="mini-topo"><span class="mini-ico" style="color:#22c55e;background:rgba(34,197,94,.12)">${svg(P.coins, 14)}</span><div class="label">Contrato mensal</div></div>
       <div class="value">${fmtCompact(resumo.contratoMensal)}</div>
-      <div class="sub">Soma dos valores mensais</div>
+      <div class="sub">Valor vigente no mês atual</div>
     </div>
     <div class="painel mini">
       <div class="mini-topo"><span class="mini-ico" style="color:#3b82f6;background:rgba(59,130,246,.12)">${svg(P.trend, 14)}</span><div class="label">Recebido em ${resumo.ano}</div></div>
@@ -1939,12 +1948,12 @@ async function carregarCobTabela() {
           return `<tr>
             <td><div class="cat-nome">${s.nome}</div><div class="cat-sub">${venc}</div></td>
             <td>dia ${s.dia_cobranca}</td>
-            <td style="text-align:right;font-weight:600;white-space:nowrap">${fmt(s.valor_mensal)}</td>
+            <td style="text-align:right;font-weight:600;white-space:nowrap">${fmt(s.valor_mensal)}${s.ajustado ? `<div class="cat-sub" style="color:${s.tipo_ajuste === "reajuste" ? "#a78bfa" : "var(--verde)"}">${s.tipo_ajuste === "reajuste" ? "reajustado" : "ajustado neste mês"}</div>` : ""}</td>
             <td><button class="btn-mini" data-toggle-pago="${s.cliente_id}" title="Clique para alternar pago/pendente">${badge}</button></td>
             <td>
               <div class="cob-acoes">
                 <button class="btn-mini" data-cob-editar="${s.cliente_id}">Editar</button>
-                <button class="btn-mini" data-cob-somar="${s.cliente_id}">+ Valor</button>
+                <button class="btn-mini" data-cob-somar="${s.cliente_id}">Alterar valor</button>
                 <button class="btn-mini perigo" data-cob-remover="${s.cliente_id}">Remover</button>
               </div>
             </td>
@@ -2001,13 +2010,35 @@ function abrirModalCobCliente(cliente = null) {
   document.getElementById("modalCobCliente").classList.add("aberto");
 }
 
+let cobValorOriginal = 0;
+
 function abrirModalCobValor(cliente) {
   cobValorClienteId = cliente.cliente_id;
-  document.getElementById("cobValorTitulo").textContent = "Adicionar valor";
-  document.getElementById("cobValorCliente").textContent = cliente.nome + " • atual: " + fmt(cliente.valor_mensal);
-  document.getElementById("cobValorAdd").value = "";
+  cobValorOriginal = cliente.valor_mensal || 0;
+  document.getElementById("cobValorTitulo").textContent = "Alterar valor do mês";
+  document.getElementById("cobValorCliente").textContent =
+    cliente.nome + " • valor atual em " + mesNome(cobMes) + ": " + fmt(cobValorOriginal);
+  document.getElementById("cobValorMes").textContent = mesNome(cobMes).toLowerCase();
+  document.getElementById("cobValorAdd").value = String(cobValorOriginal.toFixed(2)).replace(".", ",");
+  document.getElementById("cobReajuste").checked = false;
   document.getElementById("cobValorMotivo").value = "";
+  atualizarDiffValor();
   document.getElementById("modalCobValor").classList.add("aberto");
+}
+
+// Feedback ao vivo: mostra quanto o novo valor difere do atual
+function atualizarDiffValor() {
+  const el = document.getElementById("cobValorDiff");
+  const novo = parseFloat(String(document.getElementById("cobValorAdd").value).replace(",", "."));
+  if (!Number.isFinite(novo)) { el.textContent = ""; return; }
+  const d = novo - cobValorOriginal;
+  if (Math.abs(d) < 0.005) {
+    el.textContent = "Sem alteração em relação ao valor atual.";
+    el.style.color = "var(--texto2)";
+    return;
+  }
+  el.textContent = (d > 0 ? "Aumento de " : "Redução de ") + fmt(Math.abs(d)) + " em relação ao valor atual.";
+  el.style.color = d > 0 ? "var(--verde)" : "var(--vermelho)";
 }
 
 // Listeners dos modais de cobrança
@@ -2052,14 +2083,17 @@ document.getElementById("cobValorCancelar").addEventListener("click", () => {
 document.getElementById("modalCobValor").addEventListener("click", (e) => {
   if (e.target.id === "modalCobValor") e.target.classList.remove("aberto");
 });
+document.getElementById("cobValorAdd").addEventListener("input", atualizarDiffValor);
+
 document.getElementById("cobValorSalvar").addEventListener("click", async () => {
-  const valor = parseFloat(document.getElementById("cobValorAdd").value.replace(",", "."));
+  const valor = parseFloat(String(document.getElementById("cobValorAdd").value).replace(",", "."));
+  const tipo = document.getElementById("cobReajuste").checked ? "reajuste" : "pontual";
   const motivo = document.getElementById("cobValorMotivo").value.trim() || null;
-  if (!Number.isFinite(valor) || valor === 0) return alert("Informe um valor diferente de zero.");
-  await fetch(`/api/cobrancas/clientes/${cobValorClienteId}/adicionar`, {
+  if (!Number.isFinite(valor) || valor < 0) return alert("Informe um valor válido (maior ou igual a zero).");
+  await fetch("/api/cobrancas/valores", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ valor, motivo }),
+    body: JSON.stringify({ cliente_id: cobValorClienteId, mes: cobMes, valor, tipo, motivo }),
   });
   document.getElementById("modalCobValor").classList.remove("aberto");
   carregarCobrancas();
