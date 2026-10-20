@@ -883,6 +883,23 @@
   </div>
 </div>
 
+<!-- Modal de somar serviço do mês (cobranças) -->
+<div class="modal-fundo" id="modalCobServico">
+  <div class="modal">
+    <h3>Somar serviço do mês</h3>
+    <div class="subtitulo" id="cobServicoCliente" style="margin-top:-4px"></div>
+    <label>Descrição do serviço</label>
+    <input type="text" id="cobServicoDesc" placeholder="Ex.: manutenção extra, consultoria">
+    <label>Valor do serviço (R$)</label>
+    <input type="number" id="cobServicoValor" min="0" step="0.01" placeholder="Ex.: 250">
+    <div id="cobServicoLista" style="margin-top:8px"></div>
+    <div class="modal-acoes">
+      <button class="btn-sec" id="cobServicoCancelar">Fechar</button>
+      <button id="cobServicoSalvar">Somar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===== Ícones SVG (estilo Lucide, stroke currentColor) =====
 const P = {
@@ -1948,12 +1965,17 @@ async function carregarCobTabela() {
           return `<tr>
             <td><div class="cat-nome">${s.nome}</div><div class="cat-sub">${venc}</div></td>
             <td>dia ${s.dia_cobranca}</td>
-            <td style="text-align:right;font-weight:600;white-space:nowrap">${fmt(s.valor_mensal)}${s.ajustado ? `<div class="cat-sub" style="color:${s.tipo_ajuste === "reajuste" ? "#a78bfa" : "var(--verde)"}">${s.tipo_ajuste === "reajuste" ? "reajustado" : "ajustado neste mês"}</div>` : ""}</td>
+            <td style="text-align:right;font-weight:600;white-space:nowrap">
+              ${fmt(s.valor_total)}
+              ${s.extras_total > 0 ? `<div class="cat-sub" style="color:var(--verde)">+ ${fmt(s.extras_total)} em serviços</div>` : ""}
+              ${s.ajustado ? `<div class="cat-sub" style="color:${s.tipo_ajuste === "reajuste" ? "#a78bfa" : "var(--texto3)"}">${s.tipo_ajuste === "reajuste" ? "reajustado" : "valor do mês"}</div>` : ""}
+            </td>
             <td><button class="btn-mini" data-toggle-pago="${s.cliente_id}" title="Clique para alternar pago/pendente">${badge}</button></td>
             <td>
               <div class="cob-acoes">
                 <button class="btn-mini" data-cob-editar="${s.cliente_id}">Editar</button>
                 <button class="btn-mini" data-cob-somar="${s.cliente_id}">Alterar valor</button>
+                <button class="btn-mini" data-cob-servico="${s.cliente_id}">+ Serviço</button>
                 <button class="btn-mini perigo" data-cob-remover="${s.cliente_id}">Remover</button>
               </div>
             </td>
@@ -1986,6 +2008,11 @@ async function carregarCobTabela() {
     btn.addEventListener("click", () => {
       const s = todos.find(x => String(x.cliente_id) === btn.dataset.cobSomar);
       abrirModalCobValor(s);
+    }));
+  area.querySelectorAll("[data-cob-servico]").forEach(btn =>
+    btn.addEventListener("click", () => {
+      const s = todos.find(x => String(x.cliente_id) === btn.dataset.cobServico);
+      abrirModalCobServico(s);
     }));
   area.querySelectorAll("[data-cob-remover]").forEach(btn =>
     btn.addEventListener("click", async () => {
@@ -2025,6 +2052,73 @@ function abrirModalCobValor(cliente) {
   atualizarDiffValor();
   document.getElementById("modalCobValor").classList.add("aberto");
 }
+
+// ===== Serviços extras do mês =====
+let cobServicoClienteId = null;
+
+async function abrirModalCobServico(cliente) {
+  cobServicoClienteId = cliente.cliente_id;
+  document.getElementById("cobServicoCliente").textContent =
+    cliente.nome + " • " + mesNome(cobMes) + " • contrato " + fmt(cliente.valor_mensal);
+  document.getElementById("cobServicoDesc").value = "";
+  document.getElementById("cobServicoValor").value = "";
+  document.getElementById("modalCobServico").classList.add("aberto");
+  await renderExtrasModal();
+}
+
+async function renderExtrasModal() {
+  const area = document.getElementById("cobServicoLista");
+  const extras = await fetch(`/api/cobrancas/extras?cliente_id=${cobServicoClienteId}&mes=${cobMes}`)
+    .then(r => r.json());
+
+  if (!extras.length) {
+    area.innerHTML = `<div class="desc" style="margin:0">Nenhum serviço extra lançado neste mês.</div>`;
+    return;
+  }
+
+  const total = extras.reduce((s, e) => s + e.valor, 0);
+  area.innerHTML = `
+    <div class="desc" style="margin:0 0 4px">Serviços já lançados</div>
+    ${extras.map(e => `
+      <div class="orc-linha" style="padding:8px 0">
+        <div class="cat-info" style="width:auto;flex:1">
+          <div class="nome" style="font-size:13px">${e.descricao || "Serviço"}</div>
+        </div>
+        <div class="cat-valor" style="width:auto;font-size:13px">${fmt(e.valor)}</div>
+        <button class="btn-mini perigo" data-extra-remover="${e.id}">×</button>
+      </div>`).join("")}
+    <div class="desc" style="margin:6px 0 0;color:var(--verde)">Total em serviços: ${fmt(total)}</div>`;
+
+  area.querySelectorAll("[data-extra-remover]").forEach(btn =>
+    btn.addEventListener("click", async () => {
+      await fetch(`/api/cobrancas/extras/${btn.dataset.extraRemover}`, { method: "DELETE" });
+      await renderExtrasModal();
+      carregarCobrancas();
+    }));
+}
+
+document.getElementById("cobServicoCancelar").addEventListener("click", () => {
+  document.getElementById("modalCobServico").classList.remove("aberto");
+});
+document.getElementById("modalCobServico").addEventListener("click", (e) => {
+  if (e.target.id === "modalCobServico") e.target.classList.remove("aberto");
+});
+document.getElementById("cobServicoSalvar").addEventListener("click", async () => {
+  const descricao = document.getElementById("cobServicoDesc").value.trim();
+  const valor = parseFloat(String(document.getElementById("cobServicoValor").value).replace(",", "."));
+  if (!Number.isFinite(valor) || valor <= 0) return alert("Informe um valor maior que zero.");
+
+  await fetch("/api/cobrancas/extras", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cliente_id: cobServicoClienteId, mes: cobMes, descricao, valor }),
+  });
+
+  document.getElementById("cobServicoDesc").value = "";
+  document.getElementById("cobServicoValor").value = "";
+  await renderExtrasModal();
+  carregarCobrancas();
+});
 
 // Feedback ao vivo: mostra quanto o novo valor difere do atual
 function atualizarDiffValor() {
