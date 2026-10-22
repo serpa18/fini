@@ -587,6 +587,78 @@
       box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
     }
   }
+    
+/* ===== ABA AGENTE (autocontida) ===== */
+#agente .ag-wrap { --ag-card: var(--card, #141a21); --ag-line: var(--borda, #232a35); --ag-txt: var(--texto, #f3f4f6); --ag-txt2: var(--texto2, #98a2b3); --ag-txt3: var(--texto3, #6b7280); --ag-blue: var(--azul, #3b82f6); --ag-green: var(--verde, #22c55e); --ag-red: var(--vermelho, #f43f5e); --ag-amber: #fbbf24; }
+
+#agente .ag-topo { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+#agente .ag-topo h3 { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+#agente .ag-topo .ag-sub { color: var(--ag-txt2); font-size: 12.5px; margin-top: 3px; }
+
+#agente .ag-btn { border: 1px solid var(--ag-line); background: transparent; color: var(--ag-txt); padding: 9px 15px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: border-color .15s, color .15s; }
+#agente .ag-btn:hover:not(:disabled) { border-color: var(--ag-blue); color: var(--ag-blue); }
+#agente .ag-btn:disabled { opacity: .5; cursor: default; }
+
+#agente .ag-hero { background: var(--ag-card); border: 1px solid var(--ag-line); border-left: 3px solid var(--ag-blue); border-radius: 16px; padding: 20px 22px; margin-bottom: 14px; }
+#agente .ag-hero .ag-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ag-txt2); font-weight: 700; }
+#agente .ag-hero .ag-val { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; margin: 6px 0 3px; font-variant-numeric: tabular-nums; }
+#agente .ag-hero .ag-sub { font-size: 12.5px; color: var(--ag-txt2); }
+
+#agente .ag-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; margin-bottom: 14px; }
+#agente .ag-stat { background: var(--ag-card); border: 1px solid var(--ag-line); border-radius: 14px; padding: 15px 17px; }
+#agente .ag-stat .ag-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ag-txt2); font-weight: 700; }
+#agente .ag-stat .ag-val { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+#agente .ag-stat .ag-sub { font-size: 11.5px; color: var(--ag-txt3); margin-top: 4px; line-height: 1.4; }
+
+#agente .ag-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+#agente .ag-badge { display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+#agente .ag-badge.aportar { background: rgba(34,197,94,.14); color: var(--ag-green); }
+#agente .ag-badge.reduzir { background: rgba(251,191,36,.14); color: var(--ag-amber); }
+#agente .ag-badge.avaliar_saida { background: rgba(244,63,94,.14); color: var(--ag-red); }
+#agente .ag-badge.manter { background: rgba(59,130,246,.16); color: #60a5fa; }
+#agente .ag-badge.revisar { background: rgba(107,114,128,.16); color: var(--ag-txt2); }
+
+#agente .ag-card { background: var(--ag-card); border: 1px solid var(--ag-line); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; }
+#agente .ag-card h4 { margin: 0 0 3px; font-size: 13px; font-weight: 700; }
+#agente .ag-card .ag-dica { font-size: 11.5px; color: var(--ag-txt3); margin-bottom: 14px; }
+
+#agente .ag-aloc { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.045); }
+#agente .ag-aloc:last-child { border-bottom: 0; padding-bottom: 0; }
+#agente .ag-aloc-nome { width: 178px; flex: 0 0 178px; font-size: 13px; font-weight: 650; }
+#agente .ag-aloc-nome .ag-pp { display: block; font-size: 11px; font-weight: 500; color: var(--ag-txt3); margin-top: 2px; font-variant-numeric: tabular-nums; }
+#agente .ag-barra-box { position: relative; flex: 1 1 auto; min-width: 56px; }
+#agente .ag-barra { height: 7px; background: rgba(255,255,255,.07); border-radius: 4px; overflow: hidden; }
+#agente .ag-barra > i { display: block; height: 100%; border-radius: 4px; }
+#agente .ag-tick { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ag-txt2); opacity: .5; border-radius: 1px; }
+#agente .ag-aloc-val { width: 116px; flex: 0 0 116px; text-align: right; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#agente .ag-aloc-val em { font-style: normal; font-weight: 500; font-size: 11.5px; color: var(--ag-txt3); }
+
+#agente .ag-tabela-box { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+#agente table.ag-tab { width: 100%; border-collapse: collapse; font-size: 13px; }
+#agente table.ag-tab th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ag-txt3); font-weight: 700; padding: 0 10px 9px 0; border-bottom: 1px solid var(--ag-line); white-space: nowrap; }
+#agente table.ag-tab td { padding: 11px 10px 11px 0; border-bottom: 1px solid rgba(255,255,255,.045); vertical-align: top; }
+#agente table.ag-tab tr:last-child td { border-bottom: 0; }
+#agente .ag-at { font-weight: 650; font-size: 13px; }
+#agente .ag-at small { display: block; font-size: 11px; font-weight: 500; color: var(--ag-txt3); margin-top: 2px; }
+#agente .ag-r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#agente .ag-mot { color: var(--ag-txt3); font-size: 11px; margin-top: 4px; max-width: 330px; line-height: 1.45; }
+#agente .ag-classe { color: var(--ag-txt2); font-size: 12px; white-space: nowrap; }
+
+#agente .ag-aviso { display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: var(--ag-txt2); padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.045); line-height: 1.5; }
+#agente .ag-aviso:last-child { border-bottom: 0; }
+#agente .ag-aviso svg { width: 15px; height: 15px; flex: 0 0 15px; margin-top: 1px; opacity: .7; }
+
+#agente .ag-erro { background: rgba(244,63,94,.08); border: 1px solid rgba(244,63,94,.3); border-radius: 14px; padding: 16px 18px; font-size: 13px; color: #fca5a5; line-height: 1.55; }
+#agente .ag-erro code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+@media (max-width: 760px) {
+  #agente .ag-hero .ag-val { font-size: 24px; }
+  #agente .ag-aloc { gap: 9px; }
+  #agente .ag-aloc-nome { width: 104px; flex: 0 0 104px; font-size: 12px; }
+  #agente .ag-aloc-val { width: 84px; flex: 0 0 84px; font-size: 12px; }
+  #agente table.ag-tab { min-width: 620px; }
+}
+    
 </style>
 </head>
 <body>
@@ -627,6 +699,10 @@
       <div class="nav-item" data-alvo="investimentos">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
         <span>Investimentos</span>
+      </div>
+      <div class="nav-item" data-alvo="agente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+        <span>Agente</span>
       </div>
       <div class="nav-item" data-alvo="categorias">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
@@ -751,6 +827,27 @@
       </div>
     </section>
 
+    <!-- ===== AGENTE ===== -->
+    <section class="secao" id="agente">
+      <div class="ag-wrap">
+        <div class="ag-topo">
+          <div>
+            <h3>Agente de Investimentos</h3>
+            <div class="ag-sub" id="agMeta">carregando…</div>
+          </div>
+          <button class="ag-btn" id="agAtualizar" type="button">Atualizar análise</button>
+        </div>
+        <div id="agenteConteudo">
+          <div class="ag-card"><div class="ag-dica" style="margin:0">Carregando análise do agente…</div></div>
+        </div>
+      </div>
+    </section>
+      
+    <footer class="rodape" id="rodapeSync">Dados sincronizados do Pluggy via Open Finance Brasil</footer>
+  </main>
+</div>
+
+
     <!-- ===== COBRANÇAS ===== -->
     <section class="secao" id="cobrancas">
       <div class="cob-toolbar">
@@ -785,10 +882,6 @@
       </div>
     </section>
 
-    <footer class="rodape" id="rodapeSync">Dados sincronizados do Pluggy via Open Finance Brasil</footer>
-  </main>
-</div>
-
 <!-- Barra de navegação inferior (mobile) -->
 <nav class="bottom-nav">
   <div class="nav-item ativo" data-alvo="visao">
@@ -806,6 +899,10 @@
   <div class="nav-item" data-alvo="investimentos">
     <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
     <span>Investir</span>
+  </div>
+  <div class="nav-item" data-alvo="agente">
+    <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg></span>
+    <span>Agente</span>
   </div>
   <div class="nav-item" data-alvo="categorias">
     <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg></span>
@@ -1064,7 +1161,7 @@ function animarContadores() {
 }
 
 // Navegação entre seções (menu lateral + barra inferior sincronizados)
-const TITULOS = { visao: "Visão Geral", transacoes: "Transações", faturas: "Faturas", investimentos: "Investimentos", categorias: "Categorias", cobrancas: "Cobranças" };
+const TITULOS = { visao: "Visão Geral", transacoes: "Transações", faturas: "Faturas", investimentos: "Investimentos",agente: "Agente", categorias: "Categorias", cobrancas: "Cobranças"};
 document.querySelectorAll(".nav-item").forEach((el) => {
   el.addEventListener("click", () => {
     const alvo = el.dataset.alvo;
@@ -1074,6 +1171,7 @@ document.querySelectorAll(".nav-item").forEach((el) => {
     document.getElementById("tituloPagina").textContent = TITULOS[alvo] || alvo;
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (alvo === "investimentos") { renderGraficoDist(); renderGraficoPatrimonio(); }
+    if (alvo === "agente") carregarAgente();
     if (alvo === "cobrancas") carregarCobrancas();
   });
 });
@@ -1836,6 +1934,211 @@ function renderInstituicoes(invInst) {
       }).join("")}
     </div>`;
 }
+
+/* ===== ABA AGENTE (autocontida) ===== */
+(function () {
+  "use strict";
+
+  var FONTES = ["/api/agente/recomendacoes", "http://" + location.hostname + ":8090/recomendacoes"];
+  var ROTULO = { aportar: "Aportar", reduzir: "Reduzir", avaliar_saida: "Avaliar saída", manter: "Manter", revisar: "Revisar" };
+  var ORDEM = ["aportar", "reduzir", "avaliar_saida", "manter", "revisar"];
+  var ICO = {
+    raio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg>'
+  };
+
+  var carregado = false;
+  var ocupado = false;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function moeda(v) {
+    return "R$ " + Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function pct(v, d) {
+    return (Number(v || 0) * 100).toFixed(d === undefined ? 1 : d).replace(".", ",") + "%";
+  }
+  function corta(s, n) {
+    s = String(s || "");
+    n = n || 54;
+    return s.length > n ? s.slice(0, n - 1) + "…" : s;
+  }
+  function corScore(s) {
+    if (s === null || s === undefined) return "var(--ag-txt3, #6b7280)";
+    return s >= 60 ? "var(--ag-green, #22c55e)" : (s >= 40 ? "#fbbf24" : "var(--ag-red, #f43f5e)");
+  }
+
+  async function buscar(forcar) {
+    var erros = [];
+    for (var i = 0; i < FONTES.length; i++) {
+      var base = FONTES[i];
+      var url = base + (forcar ? "?refresh=1" : "");
+      try {
+        var r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) { erros.push(base + " → HTTP " + r.status); continue; }
+        var j = await r.json();
+        if (j && j.posicoes) return j;
+        erros.push(base + " → resposta sem posições");
+      } catch (e) {
+        erros.push(base + " → " + e.message);
+      }
+    }
+    throw new Error(erros.join(" · "));
+  }
+
+  function render(j) {
+    var c = j.carteira || {};
+    var ra = j.resumoAcoes || {};
+    var desvios = j.desviosClasse || [];
+    var pos = (j.posicoes || []).slice().sort(function (a, b) { return (b.valor || 0) - (a.valor || 0); });
+    var h = [];
+    var i, k;
+
+    h.push('<div class="ag-hero">');
+    h.push('<div class="ag-lbl">Patrimônio analisado</div>');
+    h.push('<div class="ag-val">' + moeda(c.total) + '</div>');
+    h.push('<div class="ag-sub">' + (c.numAtivos || 0) + ' posições · ' + (c.ativosEfetivos || 0) +
+           ' ativos efetivos · concentração ' + esc(c.concentracao || "—") + '</div>');
+    h.push('</div>');
+
+    h.push('<div class="ag-grid">');
+    h.push('<div class="ag-stat"><div class="ag-lbl">Selic meta</div><div class="ag-val">' +
+           (j.selic === null || j.selic === undefined ? "—" : String(j.selic).replace(".", ",")) +
+           '%</div><div class="ag-sub">referência de renda fixa</div></div>');
+    h.push('<div class="ag-stat"><div class="ag-lbl">Concentração</div><div class="ag-val" style="text-transform:capitalize">' +
+           esc(c.concentracao || "—") + '</div><div class="ag-sub">HHI ' +
+           (c.hhi === null || c.hhi === undefined ? "—" : c.hhi) + '</div></div>');
+    h.push('<div class="ag-stat"><div class="ag-lbl">Maior posição</div><div class="ag-val">' +
+           (c.maiorPosicao ? pct(c.maiorPosicao.peso) : "—") + '</div><div class="ag-sub">' +
+           (c.maiorPosicao ? esc(corta(c.maiorPosicao.nome, 40)) : "") + '</div></div>');
+    h.push('<div class="ag-stat"><div class="ag-lbl">Versão</div><div class="ag-val">' +
+           esc(j.versao || "—") + '</div><div class="ag-sub">' +
+           (j.comMercado ? "com dados de mercado" : "sem dados de mercado") + '</div></div>');
+    h.push('</div>');
+
+    var chips = [];
+    for (i = 0; i < ORDEM.length; i++) {
+      k = ORDEM[i];
+      if (!ra[k]) continue;
+      chips.push('<span class="ag-badge ' + k + '">' + ra[k] + ' · ' + ROTULO[k].toLowerCase() + '</span>');
+    }
+    if (chips.length) h.push('<div class="ag-chips">' + chips.join("") + '</div>');
+
+    if (desvios.length) {
+      h.push('<div class="ag-card"><h4>Alocação por classe</h4>' +
+             '<div class="ag-dica">Barra = peso atual · traço vertical = alvo</div>');
+      for (i = 0; i < desvios.length; i++) {
+        var x = desvios[i];
+        var atual = x.atual || 0;
+        var alvo = x.alvo || 0;
+        var desvio = x.desvio || 0;
+        var escala = Math.max(atual, alvo, 0.05) * 1.12;
+        var wA = Math.min(100, (atual / escala) * 100);
+        var wT = Math.min(100, (alvo / escala) * 100);
+        var cor = desvio > 0.03 ? "#fbbf24" : (desvio < -0.03 ? "#60a5fa" : "var(--ag-green, #22c55e)");
+        var sinal = desvio >= 0 ? "+" : "−";
+        h.push('<div class="ag-aloc">');
+        h.push('<div class="ag-aloc-nome">' + esc(x.classe) + '<span class="ag-pp">' + sinal +
+               Math.abs(desvio * 100).toFixed(1).replace(".", ",") + ' pp vs alvo</span></div>');
+        h.push('<div class="ag-barra-box"><div class="ag-barra"><i style="width:' + wA.toFixed(1) +
+               '%;background:' + cor + '"></i></div><div class="ag-tick" style="left:' + wT.toFixed(1) +
+               '%"></div></div>');
+        h.push('<div class="ag-aloc-val">' + pct(atual) + ' <em>/ ' + pct(alvo, 0) + '</em></div>');
+        h.push('</div>');
+      }
+      h.push('</div>');
+    }
+
+    if (pos.length) {
+      h.push('<div class="ag-card"><h4>Posições e decisões</h4>' +
+             '<div class="ag-dica">Score de 0 a 100 · a decisão vem do desvio da classe, não do peso individual</div>');
+      h.push('<div class="ag-tabela-box"><table class="ag-tab"><thead><tr>' +
+             '<th>Ativo</th><th>Classe</th><th class="ag-r">Valor</th><th class="ag-r">Peso</th>' +
+             '<th class="ag-r">Score</th><th>Decisão</th></tr></thead><tbody>');
+      for (i = 0; i < pos.length; i++) {
+        var o = pos[i];
+        var ac = ROTULO[o.acao] ? o.acao : "revisar";
+        var sub = "";
+        if (o.posicoes_agrupadas > 1) sub = o.posicoes_agrupadas + " lançamentos";
+        else if (o.confianca) sub = "confiança " + o.confianca;
+        else if (o.sem_score_por_natureza) sub = "renda fixa";
+        h.push('<tr>');
+        h.push('<td><div class="ag-at" title="' + esc(o.nome) + '">' +
+               esc(corta(o.codigo || o.nome, 24)) + (sub ? '<small>' + esc(sub) + '</small>' : '') +
+               '</div></td>');
+        h.push('<td class="ag-classe">' + esc(o.classe) + '</td>');
+        h.push('<td class="ag-r">' + moeda(o.valor) + '</td>');
+        h.push('<td class="ag-r">' + pct(o.peso) + '</td>');
+        h.push('<td class="ag-r" style="font-weight:700;color:' + corScore(o.score) + '">' +
+               (o.score === null || o.score === undefined ? "—" : o.score) + '</td>');
+        h.push('<td><span class="ag-badge ' + ac + '">' + ROTULO[ac] + '</span>' +
+               '<div class="ag-mot">' + esc(o.motivo || "") + '</div></td>');
+        h.push('</tr>');
+      }
+      h.push('</tbody></table></div></div>');
+    }
+
+    var av = j.avisos || [];
+    if (av.length) {
+      h.push('<div class="ag-card"><h4>Avisos do agente</h4>' +
+             '<div class="ag-dica">Limitações da análise desta rodada</div>');
+      for (i = 0; i < av.length; i++) {
+        h.push('<div class="ag-aviso">' + ICO.info + '<span>' + esc(av[i]) + '</span></div>');
+      }
+      h.push('</div>');
+    }
+
+    h.push('<div class="ag-aviso" style="border:0;padding-top:6px">' + ICO.raio +
+           '<span>Análise local, gerada na sua máquina. Score mede atratividade relativa no presente ' +
+           '— não prevê retorno futuro.</span></div>');
+
+    var area = document.getElementById("agenteConteudo");
+    if (area) area.innerHTML = h.join("");
+
+    var meta = document.getElementById("agMeta");
+    if (meta) {
+      meta.textContent = "v" + (j.versao || "?") + " · " +
+        new Date(j.geradoEm).toLocaleString("pt-BR") + (j.comMercado ? "" : " · sem mercado");
+    }
+  }
+
+  async function carregar(forcar) {
+    if (ocupado) return;
+    if (carregado && !forcar) return;
+
+    var area = document.getElementById("agenteConteudo");
+    var btn = document.getElementById("agAtualizar");
+    if (!area) return;
+
+    ocupado = true;
+    if (btn) { btn.disabled = true; btn.textContent = forcar ? "Analisando…" : "Carregando…"; }
+
+    try {
+      render(await buscar(!!forcar));
+      carregado = true;
+    } catch (e) {
+      area.innerHTML = '<div class="ag-erro"><strong>Não foi possível carregar o relatório do agente.</strong><br>' +
+        esc(e.message).replace(/\n/g, "<br>") +
+        '<br><br>Confira se o container <code>fini-agente</code> está rodando na porta 8090 desta máquina.</div>';
+      var meta = document.getElementById("agMeta");
+      if (meta) meta.textContent = "indisponível";
+    }
+
+    ocupado = false;
+    if (btn) { btn.disabled = false; btn.textContent = "Atualizar análise"; }
+  }
+
+  window.carregarAgente = function (forcar) { return carregar(forcar); };
+
+  function init() {
+    var btn = document.getElementById("agAtualizar");
+    if (btn) btn.addEventListener("click", function () { carregar(true); });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
 
 // ===== Cobranças (aba independente) =====
 let cobAno = new Date().getFullYear();
