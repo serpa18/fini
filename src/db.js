@@ -11,6 +11,10 @@ if (!dbPath) {
   const dataDir = path.join(__dirname, "..", "data");
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
   dbPath = path.join(dataDir, "fini.db");
+  const bkpPath = path.join(dataDir, "fini.db.bkp");
+  if (fs.existsSync(bkpPath)) {
+    fs.copyFileSync(bkpPath, dbPath);
+  }
 }
 
 const db = new DatabaseSync(dbPath);

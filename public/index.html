@@ -822,7 +822,7 @@
       </div>
       <div class="painel">
         <div class="painel-topo"><h2>Categorias</h2></div>
-        <div class="desc">Ranking de gastos do mês por categoria</div>
+        <div class="desc" id="descCategorias">Ranking de gastos do mês por categoria</div>
         <div id="categoriasLista"></div>
       </div>
     </section>
@@ -842,11 +842,6 @@
         </div>
       </div>
     </section>
-      
-    <footer class="rodape" id="rodapeSync">Dados sincronizados do Pluggy via Open Finance Brasil</footer>
-  </main>
-</div>
-
 
     <!-- ===== COBRANÇAS ===== -->
     <section class="secao" id="cobrancas">
@@ -864,7 +859,7 @@
         <button id="btnNovoCliente">+ Novo cliente</button>
       </div>
       <div class="cob-resumo" id="cobResumoCards"></div>
-      <div class="painel">
+      <div class="painel" style="margin-bottom:20px">
         <div class="painel-topo"><h2>Recebimentos do ano</h2></div>
         <div class="desc">Esperado versus recebido, mês a mês</div>
         <div class="cob-grafico-box"><canvas id="graficoCob"></canvas></div>
@@ -881,6 +876,10 @@
         <div id="cobTabela"></div>
       </div>
     </section>
+      
+    <footer class="rodape" id="rodapeSync">Dados sincronizados do Pluggy via Open Finance Brasil</footer>
+  </main>
+</div>
 
 <!-- Barra de navegação inferior (mobile) -->
 <nav class="bottom-nav">
@@ -933,25 +932,71 @@
 <div class="modal-fundo" id="modalCobCliente">
   <div class="modal">
     <h3 id="cobModalTitulo">Novo cliente</h3>
+    <label>Tipo de cobrança</label>
+    <select id="cobTipo">
+      <option value="contrato">Contrato recorrente (mensal)</option>
+      <option value="avulso">Cliente avulso (somente em um mês)</option>
+    </select>
     <label>Nome do cliente</label>
     <input type="text" id="cobNome" placeholder="Ex.: Empresa X">
-    <label>Valor base do contrato (R$)</label>
+    <label id="cobValorLabel">Valor base do contrato (R$)</label>
     <input type="number" id="cobValor" min="0" step="0.01" placeholder="Ex.: 1500">
-    <div class="desc" style="margin:-4px 0 0;font-size:11.5px">Vale para os meses sem valor específico. Para alterar um mês só, use "Alterar valor" na tabela.</div>
-    <label>Dia da cobrança (1–31)</label>
-    <input type="number" id="cobDia" min="1" max="31" placeholder="Ex.: 10">
-    <label>Vencimento do contrato</label>
-    <div style="display:flex;gap:10px;align-items:center">
-      <input type="date" id="cobVenc" style="flex:1">
-      <label style="display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap;color:var(--texto2);font-size:12px">
-        <input type="checkbox" id="cobIndeterminado"> Indeterminado
-      </label>
+    <div class="desc" id="cobValorHint" style="margin:-4px 0 0;font-size:11.5px">Vale para os meses sem valor específico. Para alterar um mês só, use "Alterar valor" na tabela.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="margin:0">Dia da cobrança (1–31)</label>
+        <input type="number" id="cobDia" min="1" max="31" placeholder="Ex.: 10">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label id="cobMesInicioLabel" style="margin:0">Mês de início</label>
+        <input type="month" id="cobMesInicio">
+      </div>
+    </div>
+    <div id="cobBlocoVenc" style="display:flex;flex-direction:column;gap:6px">
+      <label style="margin:0">Fim do contrato (último mês cobrado)</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="date" id="cobVenc" style="flex:1">
+        <label style="display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap;color:var(--texto2);font-size:12px;cursor:pointer">
+          <input type="checkbox" id="cobIndeterminado"> Indeterminado
+        </label>
+      </div>
     </div>
     <label>Observações (opcional)</label>
-    <input type="text" id="cobObs" placeholder="Anotações sobre o contrato">
+    <input type="text" id="cobObs" placeholder="Anotações sobre o cliente ou serviço">
     <div class="modal-acoes">
       <button class="btn-sec" id="cobCancelar">Cancelar</button>
       <button id="cobSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de remover cobrança (por mês vs encerrar vs tudo) -->
+<div class="modal-fundo" id="modalCobRemover">
+  <div class="modal" style="max-width:420px">
+    <h3 id="cobRemoverTitulo">Remover cobrança</h3>
+    <div class="subtitulo" id="cobRemoverSub" style="margin-top:-2px;line-height:1.45"></div>
+    <div id="cobRemoverOpcoes" style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+      <button type="button" id="btnRemoverMes" class="btn-sec" style="justify-content:flex-start;text-align:left;padding:12px 14px;border:1px solid var(--borda)">
+        <div>
+          <div style="font-weight:700;color:var(--texto)" id="lblRemoverMes">Remover apenas deste mês</div>
+          <div style="font-size:11.5px;color:var(--texto2);font-weight:400;margin-top:2px">Dispensa a cobrança somente neste mês. Os demais meses não são afetados.</div>
+        </div>
+      </button>
+      <button type="button" id="btnRemoverEncerrar" class="btn-sec" style="justify-content:flex-start;text-align:left;padding:12px 14px;border:1px solid var(--borda)">
+        <div>
+          <div style="font-weight:700;color:#fbbf24" id="lblRemoverEncerrar">Encerrar contrato a partir deste mês</div>
+          <div style="font-size:11.5px;color:var(--texto2);font-weight:400;margin-top:2px">Para de cobrar deste mês em diante, preservando o histórico dos meses anteriores.</div>
+        </div>
+      </button>
+      <button type="button" id="btnRemoverTudo" class="btn-sec" style="justify-content:flex-start;text-align:left;padding:12px 14px;border:1px solid rgba(244,63,94,.35);background:rgba(244,63,94,.08)">
+        <div>
+          <div style="font-weight:700;color:var(--vermelho)" id="lblRemoverTudo">Excluir cliente e todo o histórico</div>
+          <div style="font-size:11.5px;color:var(--texto2);font-weight:400;margin-top:2px" id="subRemoverTudo">Apaga definitivamente o cadastro e todos os pagamentos de todos os meses.</div>
+        </div>
+      </button>
+    </div>
+    <div class="modal-acoes">
+      <button class="btn-sec" id="cobRemoverCancelar">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1568,7 +1613,7 @@ async function carregarCategorias(mes) {
       </div>`;
     }).join("");
   }
-  const desc = document.querySelector("#categorias .desc");
+  const desc = document.getElementById("descCategorias");
   if (desc) desc.textContent = "Ranking de gastos de " + mesNome(mes) + " por categoria";
 }
 
@@ -2148,12 +2193,27 @@ let cobResumo = null;
 let graficoCob = null;
 let cobEditandoId = null;
 let cobValorClienteId = null;
+let cobRemoverClienteObj = null;
 let cobFiltroStatus = "todos";
 const COB_STATUS_LABEL = { pago: "Pago", pendente: "Pendente", atrasado: "Atrasado" };
 
+function escHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function mesAtualIso() {
+  const agora = new Date();
+  return agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, "0");
+}
+
 async function carregarCobrancas() {
   try {
-    const resumo = await fetch(`/api/cobrancas/resumo?ano=${cobAno}`).then(r => r.json());
+    const queryMes = cobMes && cobMes.startsWith(String(cobAno)) ? `&mes=${cobMes}` : "";
+    const resumo = await fetch(`/api/cobrancas/resumo?ano=${cobAno}${queryMes}`).then(r => r.json());
     cobResumo = resumo;
     cobAnos = (resumo.anos && resumo.anos.length) ? resumo.anos : [new Date().getFullYear()];
     if (!cobAnos.includes(cobAno)) cobAno = cobAnos[0];
@@ -2161,16 +2221,21 @@ async function carregarCobrancas() {
     document.getElementById("cobAnoSel").innerHTML =
       cobAnos.map(a => `<option value="${a}" ${a === cobAno ? "selected" : ""}>${a}</option>`).join("");
 
-    // Meses do ano com movimento (ou janeiro como fallback)
-    const mesesComDados = resumo.meses.filter(m => m.esperado > 0 || m.pago > 0).map(m => m.mes);
-    const listaMeses = mesesComDados.length ? mesesComDados : [cobAno + "-01"];
+    // Sempre exibe todos os 12 meses do ano selecionado para permitir consultar/lançar em qualquer mês
+    const todosMesesAno = resumo.meses.map(m => m.mes);
     if (!cobMes || !cobMes.startsWith(String(cobAno))) {
-      const agora = new Date();
-      const mesAtualStr = agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, "0");
-      cobMes = listaMeses.includes(mesAtualStr) ? mesAtualStr : listaMeses[listaMeses.length - 1];
+      const mesAtualStr = mesAtualIso();
+      const mesesComDados = resumo.meses.filter(m => m.esperado > 0 || m.pago > 0).map(m => m.mes);
+      if (todosMesesAno.includes(mesAtualStr)) {
+        cobMes = mesAtualStr;
+      } else if (mesesComDados.length) {
+        cobMes = mesesComDados[mesesComDados.length - 1];
+      } else {
+        cobMes = cobAno + "-01";
+      }
     }
     document.getElementById("cobMesSel").innerHTML =
-      listaMeses.map(m => `<option value="${m}" ${m === cobMes ? "selected" : ""}>${mesNome(m)}</option>`).join("");
+      todosMesesAno.map(m => `<option value="${m}" ${m === cobMes ? "selected" : ""}>${mesNome(m)}</option>`).join("");
 
     renderCobResumo(resumo);
     renderGraficoCob(resumo);
@@ -2183,14 +2248,14 @@ async function carregarCobrancas() {
 function renderCobResumo(resumo) {
   document.getElementById("cobResumoCards").innerHTML = `
     <div class="painel mini">
-      <div class="mini-topo"><span class="mini-ico" style="color:#8b5cf6;background:rgba(139,92,246,.12)">${svg(P.dots, 14)}</span><div class="label">Clientes ativos</div></div>
+      <div class="mini-topo"><span class="mini-ico" style="color:#8b5cf6;background:rgba(139,92,246,.12)">${svg(P.dots, 14)}</span><div class="label">Clientes no mês</div></div>
       <div class="value">${resumo.clientesAtivos}</div>
-      <div class="sub">Contratos registrados</div>
+      <div class="sub">Ativos em ${mesNome(cobMes)}</div>
     </div>
     <div class="painel mini">
-      <div class="mini-topo"><span class="mini-ico" style="color:#22c55e;background:rgba(34,197,94,.12)">${svg(P.coins, 14)}</span><div class="label">Contrato mensal</div></div>
+      <div class="mini-topo"><span class="mini-ico" style="color:#22c55e;background:rgba(34,197,94,.12)">${svg(P.coins, 14)}</span><div class="label">Contratos no mês</div></div>
       <div class="value">${fmtCompact(resumo.contratoMensal)}</div>
-      <div class="sub">Valor vigente no mês atual</div>
+      <div class="sub">Recorrente vigente em ${mesCurto(cobMes)}</div>
     </div>
     <div class="painel mini">
       <div class="mini-topo"><span class="mini-ico" style="color:#3b82f6;background:rgba(59,130,246,.12)">${svg(P.trend, 14)}</span><div class="label">Recebido em ${resumo.ano}</div></div>
@@ -2255,7 +2320,7 @@ async function carregarCobTabela() {
 
   const area = document.getElementById("cobTabela");
   if (!todos.length) {
-    area.innerHTML = `<div class="vazio">Nenhum cliente cadastrado ainda. Use "+ Novo cliente" para começar.</div>`;
+    area.innerHTML = `<div class="vazio">Nenhuma cobrança ativa em ${mesNome(cobMes)}. Use "+ Novo cliente" para cadastrar um contrato ou cliente avulso.</div>`;
   } else if (!status.length) {
     area.innerHTML = `<div class="vazio">Nenhum cliente "${NOMES_FILTRO[cobFiltroStatus]}" em ${mesNome(cobMes)}.</div>`;
   } else {
@@ -2264,9 +2329,20 @@ async function carregarCobTabela() {
       <tbody>
         ${status.map(s => {
           const badge = `<span class="cob-badge ${s.status}">${COB_STATUS_LABEL[s.status] || s.status}</span>`;
-          const venc = s.data_vencimento ? "Vence em " + fmtData(s.data_vencimento) : "Contrato indeterminado";
+          const ehAvulso = s.tipo_cobranca === "avulso";
+          let subInfo = "";
+          if (ehAvulso) {
+            subInfo = `<span style="color:#38bdf8;font-weight:600">Cliente avulso</span> • ${mesNome(s.mes_inicio || cobMes)}`;
+          } else if (s.data_vencimento) {
+            subInfo = `Contrato até ${mesCurto(s.data_vencimento.slice(0, 7))} (${fmtData(s.data_vencimento)})`;
+          } else {
+            subInfo = "Contrato indeterminado";
+          }
+          if (s.observacoes) {
+            subInfo += ` • ${escHtml(s.observacoes)}`;
+          }
           return `<tr>
-            <td><div class="cat-nome">${s.nome}</div><div class="cat-sub">${venc}</div></td>
+            <td><div class="cat-nome">${escHtml(s.nome)}</div><div class="cat-sub">${subInfo}</div></td>
             <td>dia ${s.dia_cobranca}</td>
             <td style="text-align:right;font-weight:600;white-space:nowrap">
               ${fmt(s.valor_total)}
@@ -2318,27 +2394,86 @@ async function carregarCobTabela() {
       abrirModalCobServico(s);
     }));
   area.querySelectorAll("[data-cob-remover]").forEach(btn =>
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", () => {
       const s = todos.find(x => String(x.cliente_id) === btn.dataset.cobRemover);
-      if (!confirm(`Remover "${s.nome}" e todo o histórico de cobranças dele?`)) return;
-      await fetch(`/api/cobrancas/clientes/${s.cliente_id}`, { method: "DELETE" });
-      carregarCobrancas();
+      if (s) abrirModalCobRemover(s);
     }));
 }
+
+function atualizarCamposTipoCob() {
+  const ehAvulso = document.getElementById("cobTipo").value === "avulso";
+  document.getElementById("cobBlocoVenc").style.display = ehAvulso ? "none" : "flex";
+  document.getElementById("cobValorLabel").textContent = ehAvulso ? "Valor da cobrança avulsa (R$)" : "Valor base do contrato (R$)";
+  document.getElementById("cobValorHint").textContent = ehAvulso
+    ? "Cobrado somente no mês selecionado abaixo."
+    : "Vale para os meses sem valor específico. Para alterar um mês só, use \"Alterar valor\" na tabela.";
+  document.getElementById("cobMesInicioLabel").textContent = ehAvulso ? "Mês da cobrança" : "Mês de início";
+}
+
+document.getElementById("cobTipo").addEventListener("change", atualizarCamposTipoCob);
 
 function abrirModalCobCliente(cliente = null) {
   cobEditandoId = cliente ? cliente.cliente_id : null;
   document.getElementById("cobModalTitulo").textContent = cliente ? "Editar cliente" : "Novo cliente";
+  document.getElementById("cobTipo").value = cliente ? (cliente.tipo_cobranca || "contrato") : "contrato";
   document.getElementById("cobNome").value = cliente ? cliente.nome : "";
-  document.getElementById("cobValor").value = cliente ? cliente.valor_mensal : "";
+  const valorBase = cliente ? (cliente.valor_base ?? cliente.valor_mensal ?? "") : "";
+  document.getElementById("cobValor").value = valorBase;
   document.getElementById("cobDia").value = cliente ? cliente.dia_cobranca : "";
-  const venc = cliente && cliente.data_vencimento ? cliente.data_vencimento.slice(0, 10) : "";
+  document.getElementById("cobMesInicio").value = (cliente && cliente.mes_inicio) ? cliente.mes_inicio : (cobMes || mesAtualIso());
+  const venc = cliente && cliente.tipo_cobranca !== "avulso" && cliente.data_vencimento
+    ? cliente.data_vencimento.slice(0, 10)
+    : "";
   document.getElementById("cobVenc").value = venc;
   document.getElementById("cobIndeterminado").checked = !venc;
   document.getElementById("cobVenc").disabled = !venc;
-  document.getElementById("cobObs").value = "";
+  document.getElementById("cobObs").value = cliente ? (cliente.observacoes || "") : "";
+  atualizarCamposTipoCob();
   document.getElementById("modalCobCliente").classList.add("aberto");
 }
+
+function abrirModalCobRemover(cliente) {
+  cobRemoverClienteObj = cliente;
+  const ehAvulso = cliente.tipo_cobranca === "avulso";
+  document.getElementById("cobRemoverTitulo").textContent = ehAvulso ? "Remover cobrança avulsa" : "Remover cobrança";
+  document.getElementById("cobRemoverSub").textContent =
+    `${cliente.nome} • referência: ${mesNome(cobMes)}`;
+  document.getElementById("btnRemoverMes").style.display = ehAvulso ? "none" : "inline-flex";
+  document.getElementById("btnRemoverEncerrar").style.display = ehAvulso ? "none" : "inline-flex";
+  document.getElementById("lblRemoverMes").textContent = `Remover apenas de ${mesNome(cobMes)}`;
+  document.getElementById("lblRemoverEncerrar").textContent = `Encerrar contrato a partir de ${mesNome(cobMes)}`;
+  document.getElementById("lblRemoverTudo").textContent = ehAvulso
+    ? `Excluir cobrança avulsa de ${mesNome(cobMes)}`
+    : "Excluir cliente e todo o histórico";
+  document.getElementById("subRemoverTudo").textContent = ehAvulso
+    ? "Remove definitivamente este lançamento avulso."
+    : "Apaga definitivamente o cadastro e todos os pagamentos de todos os meses.";
+  document.getElementById("modalCobRemover").classList.add("aberto");
+}
+
+async function executarRemocaoCob(modo) {
+  if (!cobRemoverClienteObj) return;
+  await fetch(`/api/cobrancas/mes/${cobRemoverClienteObj.cliente_id}/${cobMes}?modo=${modo}`, {
+    method: "DELETE",
+  });
+  document.getElementById("modalCobRemover").classList.remove("aberto");
+  cobRemoverClienteObj = null;
+  carregarCobrancas();
+}
+
+document.getElementById("btnRemoverMes").addEventListener("click", () => executarRemocaoCob("mes"));
+document.getElementById("btnRemoverEncerrar").addEventListener("click", () => executarRemocaoCob("encerrar"));
+document.getElementById("btnRemoverTudo").addEventListener("click", () => executarRemocaoCob("tudo"));
+document.getElementById("cobRemoverCancelar").addEventListener("click", () => {
+  document.getElementById("modalCobRemover").classList.remove("aberto");
+  cobRemoverClienteObj = null;
+});
+document.getElementById("modalCobRemover").addEventListener("click", (e) => {
+  if (e.target.id === "modalCobRemover") {
+    e.target.classList.remove("aberto");
+    cobRemoverClienteObj = null;
+  }
+});
 
 let cobValorOriginal = 0;
 
@@ -2362,7 +2497,7 @@ let cobServicoClienteId = null;
 async function abrirModalCobServico(cliente) {
   cobServicoClienteId = cliente.cliente_id;
   document.getElementById("cobServicoCliente").textContent =
-    cliente.nome + " • " + mesNome(cobMes) + " • contrato " + fmt(cliente.valor_mensal);
+    cliente.nome + " • " + mesNome(cobMes) + " • base " + fmt(cliente.valor_mensal);
   document.getElementById("cobServicoDesc").value = "";
   document.getElementById("cobServicoValor").value = "";
   document.getElementById("modalCobServico").classList.add("aberto");
@@ -2385,7 +2520,7 @@ async function renderExtrasModal() {
     ${extras.map(e => `
       <div class="orc-linha" style="padding:8px 0">
         <div class="cat-info" style="width:auto;flex:1">
-          <div class="nome" style="font-size:13px">${e.descricao || "Serviço"}</div>
+          <div class="nome" style="font-size:13px">${escHtml(e.descricao || "Serviço")}</div>
         </div>
         <div class="cat-valor" style="width:auto;font-size:13px">${fmt(e.valor)}</div>
         <button class="btn-mini perigo" data-extra-remover="${e.id}">×</button>
@@ -2450,14 +2585,32 @@ document.getElementById("modalCobCliente").addEventListener("click", (e) => {
   if (e.target.id === "modalCobCliente") e.target.classList.remove("aberto");
 });
 document.getElementById("cobSalvar").addEventListener("click", async () => {
+  const tipo_cobranca = document.getElementById("cobTipo").value === "avulso" ? "avulso" : "contrato";
   const nome = document.getElementById("cobNome").value.trim();
-  const valor = parseFloat(document.getElementById("cobValor").value.replace(",", "."));
+  const valor = parseFloat(String(document.getElementById("cobValor").value).replace(",", "."));
   const dia = parseInt(document.getElementById("cobDia").value, 10) || 1;
+  const mes_inicio = document.getElementById("cobMesInicio").value || cobMes || mesAtualIso();
   const indeterminado = document.getElementById("cobIndeterminado").checked;
-  const venc = indeterminado ? null : (document.getElementById("cobVenc").value || null);
+  const venc = tipo_cobranca === "avulso"
+    ? null
+    : (indeterminado ? null : (document.getElementById("cobVenc").value || null));
   const obs = document.getElementById("cobObs").value.trim() || null;
+
   if (!nome || !Number.isFinite(valor) || valor < 0) return alert("Informe nome e valor válidos.");
-  const corpo = { nome, valor_mensal: valor, dia_cobranca: dia, data_vencimento: venc, observacoes: obs };
+  if (tipo_cobranca === "contrato" && !indeterminado && venc && venc.slice(0, 7) < mes_inicio) {
+    return alert("A data de fim do contrato não pode ser anterior ao mês de início.");
+  }
+
+  const corpo = {
+    nome,
+    tipo_cobranca,
+    valor_mensal: valor,
+    dia_cobranca: dia,
+    mes_inicio,
+    data_vencimento: venc,
+    observacoes: obs,
+  };
+
   if (cobEditandoId) {
     await fetch(`/api/cobrancas/clientes/${cobEditandoId}`, {
       method: "PUT",
@@ -2472,6 +2625,10 @@ document.getElementById("cobSalvar").addEventListener("click", async () => {
     });
   }
   document.getElementById("modalCobCliente").classList.remove("aberto");
+  if (mes_inicio && /^\d{4}-\d{2}$/.test(mes_inicio)) {
+    cobAno = Number(mes_inicio.slice(0, 4));
+    cobMes = mes_inicio;
+  }
   carregarCobrancas();
 });
 document.getElementById("cobValorCancelar").addEventListener("click", () => {
@@ -2504,16 +2661,18 @@ document.getElementById("cobAnoSel").addEventListener("change", (e) => {
 });
 document.getElementById("cobMesSel").addEventListener("change", (e) => {
   cobMes = e.target.value;
-  carregarCobTabela();
+  carregarCobrancas();
 });
 document.getElementById("btnNovoCliente").addEventListener("click", () => abrirModalCobCliente());
 
-// Troca de mês no seletor (disponível apenas na página principal)
+// Troca de mês no seletor (disponível na página principal e sincroniza Categorias/Orçamento)
 document.getElementById("seletorMes").addEventListener("change", async (e) => {
   mesSelecionado = e.target.value;
   if (!mesSelecionado) return;
   renderFluxo();
   await carregarCardsMes();
+  await carregarCategorias(mesSelecionado);
+  await carregarOrcamento();
 });
 
 // Filtros da tabela de transações (tipo + busca + período)
