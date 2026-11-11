@@ -165,7 +165,7 @@ async function sync() {
         try {
           const hoje = new Date();
           const anoAtual = hoje.getFullYear();
-          const dateFrom = `${anoAtual}-01-01`;
+          const dateFrom = `${anoAtual - 1}-01-01`;
           const dateTo = `${anoAtual}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
 
           const txs = await pluggy.getTransactions(a.id, { dateFrom, dateTo });
@@ -228,7 +228,12 @@ async function sync() {
     if (!produtos.length || produtos.includes("INVESTMENTS")) {
       try {
         const inv = await pluggy.getInvestments(itemId);
-        for (const i of inv) upInv.run(i.id, i.name || "", i.type || "", i.subtype || "", i.code || "", i.balance ?? null, itemId, institution);
+        if (Array.isArray(inv) && inv.length > 0) {
+          db.prepare("DELETE FROM investments WHERE item_id = ?").run(itemId);
+          for (const i of inv) {
+            upInv.run(i.id, i.name || "", i.type || "", i.subtype || "", i.code || "", i.balance ?? null, itemId, institution);
+          }
+        }
       } catch (err) {
         notices.push("investimentos: " + err.message);
       }

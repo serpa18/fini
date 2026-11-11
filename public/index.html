@@ -418,6 +418,66 @@
   .cob-grafico-box { position: relative; height: 220px; }
   .cob-grafico-box canvas { width: 100% !important; height: 100% !important; }
 
+  /* ===== Investimentos: Sub-abas (Visão Geral | Operações & Preço Médio) ===== */
+  .inv-subnav {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .inv-main-tabs { margin-bottom: 0 !important; }
+  .inv-toggle-xp {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--borda);
+    padding: 8px 13px; border-radius: 10px; font-size: 12.5px; color: var(--texto2);
+    cursor: pointer; user-select: none;
+  }
+  .inv-toggle-xp input { accent-color: var(--verde); cursor: pointer; }
+  .inv-classe-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  }
+  .inv-tipo-badge {
+    display: inline-flex; align-items: center; padding: 3px 9px;
+    border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .inv-tipo-badge.compra { background: rgba(59,130,246,.14); color: #60a5fa; }
+  .inv-tipo-badge.venda { background: rgba(245,158,11,.15); color: #fbbf24; }
+  .inv-simulador-grid {
+    display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: stretch;
+  }
+  .inv-sim-campos {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;
+  }
+  .inv-sim-campo { display: flex; flex-direction: column; gap: 5px; }
+  .inv-sim-campo label { font-size: 11.5px; color: var(--texto2); font-weight: 500; }
+  .inv-sim-campo input, .inv-sim-campo select {
+    background: var(--bg2); color: var(--texto); border: 1px solid var(--borda);
+    border-radius: 10px; padding: 9px 11px; font-size: 13px; font-family: inherit;
+  }
+  .inv-sim-campo input:focus, .inv-sim-campo select:focus { outline: none; border-color: var(--azul); }
+  .inv-sim-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .inv-sim-resultado {
+    background: var(--bg2); border: 1px solid var(--borda); border-radius: 14px;
+    padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  }
+  .inv-sim-linha { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--texto2); }
+  .inv-sim-linha b { color: var(--texto); font-size: 13px; }
+  .inv-sim-destaque {
+    border-top: 1px solid var(--borda); padding-top: 10px; margin-top: 2px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .inv-filtros-bar {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .inv-filtros-bar input, .inv-filtros-bar select {
+    background: var(--bg2); color: var(--texto); border: 1px solid var(--borda);
+    border-radius: 10px; padding: 8px 12px; font-size: 12.5px; font-family: inherit;
+  }
+  @media (max-width: 900px) {
+    .inv-simulador-grid { grid-template-columns: 1fr; }
+    #invTabelaPosicoes, #invTabelaOperacoes { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #invTabelaPosicoes table, #invTabelaOperacoes table { min-width: 680px; }
+  }
+
   /* ===== Modal de orçamento ===== */
   .modal-fundo {
     display: none; position: fixed; inset: 0; z-index: 90;
@@ -735,7 +795,124 @@
 
     <!-- ===== INVESTIMENTOS ===== -->
     <section class="secao" id="investimentos">
+      <div class="inv-subnav">
+        <div class="tabs inv-main-tabs" id="invSubTabs">
+          <div class="tab ativo" data-inv-aba="visao">Visão Geral</div>
+          <div class="tab" data-inv-aba="operacoes">Operações &amp; Preço Médio</div>
+        </div>
+        <div id="invAcoesTopo" style="display:none;gap:10px;align-items:center;flex-wrap:wrap">
+          <label class="inv-toggle-xp" title="Na XP, Ações/Units/ETFs/BDRs têm taxa padrão de R$ 4,90 por ordem; FIIs, Tesouro Direto e Cripto têm taxa zero (R$ 0,00).">
+            <input type="checkbox" id="chkTaxasXP" checked>
+            <span>Incluir corretagem XP (R$ 4,90)</span>
+          </label>
+          <button id="btnNovaOperacaoInv">+ Nova operação</button>
+        </div>
+      </div>
       <div id="invConteudo"></div>
+      <div id="invOperacoesConteudo" style="display:none">
+        <div class="cob-resumo" id="invOpResumoCards"></div>
+
+        <!-- Calculadora & Simulador de Valor de Venda -->
+        <div class="painel" style="margin-bottom:20px" id="painelSimuladorVenda">
+          <div class="painel-topo">
+            <div>
+              <h2>Simulador de Valor de Venda &amp; Lucro Líquido</h2>
+              <div class="desc" style="margin-bottom:0">Calcule o preço de venda ideal, ponto de equilíbrio com corretagem XP e resultado líquido antes de vender</div>
+            </div>
+            <span class="cob-badge pago" id="simBadgeTaxaXP">Corretagem XP automática</span>
+          </div>
+          <div class="inv-simulador-grid" style="margin-top:14px">
+            <div>
+              <div class="inv-sim-campos">
+                <div class="inv-sim-campo">
+                  <label for="simAtivoSel">Ativo em carteira</label>
+                  <select id="simAtivoSel"></select>
+                </div>
+                <div class="inv-sim-campo">
+                  <label for="simQtdInput">Quantidade a vender</label>
+                  <input type="number" id="simQtdInput" min="0.00000001" step="any" placeholder="Ex.: 50">
+                </div>
+                <div class="inv-sim-campo">
+                  <label for="simPrecoInput">Preço de venda unitário (R$)</label>
+                  <input type="number" id="simPrecoInput" min="0" step="0.01" placeholder="Ex.: 38,50">
+                </div>
+                <div class="inv-sim-campo">
+                  <label for="simTaxaInput">Taxa XP na venda (R$)</label>
+                  <input type="number" id="simTaxaInput" min="0" step="0.01" placeholder="4,90">
+                </div>
+              </div>
+              <div class="inv-sim-chips">
+                <button type="button" class="btn-mini" data-sim-alvo="empate">Empate (0%)</button>
+                <button type="button" class="btn-mini" data-sim-alvo="5">+5% sobre PM</button>
+                <button type="button" class="btn-mini" data-sim-alvo="10">+10% sobre PM</button>
+                <button type="button" class="btn-mini" data-sim-alvo="15">+15% sobre PM</button>
+                <button type="button" class="btn-mini" data-sim-alvo="20">+20% sobre PM</button>
+                <button type="button" class="btn-mini" data-sim-alvo="mercado" id="btnSimPrecoMercado" style="display:none">Usar cotação Pluggy</button>
+              </div>
+            </div>
+            <div class="inv-sim-resultado" id="simResultadoBox"></div>
+          </div>
+        </div>
+
+        <!-- Tabela de Posição Consolidada & Preço Médio -->
+        <div class="painel" style="margin-bottom:20px">
+          <div class="painel-topo">
+            <div>
+              <h2>Posição Consolidada &amp; Preço Médio por Ativo</h2>
+              <div class="desc" style="margin-bottom:0">Cálculo cronológico ponderado com taxas da XP e comparativo com saldo atual</div>
+            </div>
+          </div>
+          <div class="inv-filtros-bar" style="margin-top:12px">
+            <div class="tabs" id="invPosicaoTabs" style="margin-bottom:0">
+              <div class="tab ativo" data-pos-aba="ativas" id="tabPosAtivas">Em Carteira</div>
+              <div class="tab" data-pos-aba="encerradas" id="tabPosEncerradas">Posições Encerradas (Vendidos)</div>
+            </div>
+            <select id="invPosicaoClasseSel">
+              <option value="todas">Todas as classes</option>
+              <option value="Fundo Imobiliário">Fundo Imobiliário</option>
+              <option value="Ações">Ações</option>
+              <option value="ETF">ETF</option>
+              <option value="BDR">BDR</option>
+              <option value="Tesouro">Tesouro</option>
+              <option value="Criptoativos">Criptoativos</option>
+            </select>
+            <input type="text" id="invPosicaoBusca" placeholder="Buscar ativo (ex: PETR4, TAEE11)..." style="flex:1;min-width:180px">
+          </div>
+          <div id="invTabelaPosicoes"></div>
+        </div>
+
+        <!-- Histórico de Operações (Compras e Vendas) -->
+        <div class="painel">
+          <div class="painel-topo">
+            <div>
+              <h2>Histórico de Operações (Compras &amp; Vendas)</h2>
+              <div class="desc" style="margin-bottom:0" id="invHistSub">Todos os lançamentos sincronizados da sua planilha com evolução do Preço Médio</div>
+            </div>
+            <button class="btn-mini" id="btnNovaOpHist">+ Lançar compra/venda</button>
+          </div>
+          <div class="inv-filtros-bar" style="margin-top:12px">
+            <div class="tabs" id="invHistTipoTabs" style="margin-bottom:0">
+              <div class="tab ativo" data-hist-tipo="todos" id="tabHistTodos">Todas</div>
+              <div class="tab" data-hist-tipo="compra" id="tabHistCompras">Compras</div>
+              <div class="tab" data-hist-tipo="venda" id="tabHistVendas">Vendas</div>
+            </div>
+            <select id="invHistAnoSel">
+              <option value="todos">Todos os anos</option>
+            </select>
+            <select id="invHistClasseSel">
+              <option value="todas">Todas as classes</option>
+              <option value="Fundo Imobiliário">Fundo Imobiliário</option>
+              <option value="Ações">Ações</option>
+              <option value="ETF">ETF</option>
+              <option value="BDR">BDR</option>
+              <option value="Tesouro">Tesouro</option>
+              <option value="Criptoativos">Criptoativos</option>
+            </select>
+            <input type="text" id="invHistBusca" placeholder="Filtrar por código do ativo..." style="flex:1;min-width:180px">
+          </div>
+          <div id="invTabelaOperacoes"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ===== CATEGORIAS ===== -->
@@ -947,6 +1124,73 @@
   </div>
 </div>
 
+<!-- Modal de Nova / Editar Operação de Investimento -->
+<div class="modal-fundo" id="modalInvOperacao">
+  <div class="modal" style="max-width:430px">
+    <h3 id="invOpModalTitulo">Nova operação</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="margin:0">Tipo de operação</label>
+        <select id="invOpTipo">
+          <option value="compra">Compra (+)</option>
+          <option value="venda">Venda (−)</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="margin:0">Mês / Ano</label>
+        <input type="month" id="invOpMesAno">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="margin:0">Ativo (Ticker)</label>
+        <input type="text" id="invOpAtivo" list="listaAtivosB3" placeholder="Ex.: PETR4, MXRF11, TAEE11" style="text-transform:uppercase">
+        <datalist id="listaAtivosB3"></datalist>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="margin:0">Classe</label>
+        <select id="invOpClasse">
+          <option value="Fundo Imobiliário">Fundo Imobiliário</option>
+          <option value="Ações">Ações</option>
+          <option value="ETF">ETF</option>
+          <option value="BDR">BDR</option>
+          <option value="Tesouro">Tesouro</option>
+          <option value="Criptoativos">Criptoativos</option>
+          <option value="CDB">CDB / Renda Fixa</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="margin:0">Quantidade (Cotas)</label>
+        <input type="number" id="invOpCotas" min="0.00000001" step="any" placeholder="Ex.: 10">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="margin:0">Preço Unitário (R$)</label>
+        <input type="number" id="invOpPreco" min="0" step="0.01" placeholder="Ex.: 34,50">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="margin:0">Corretagem XP (R$)</label>
+        <input type="number" id="invOpTaxa" min="0" step="0.01" placeholder="4,90 ou 0,00">
+      </div>
+      <div class="desc" id="invOpTaxaHint" style="margin:0 0 6px;font-size:11.5px;line-height:1.35">
+        Padrão XP aplicado automaticamente pela classe do ativo.
+      </div>
+    </div>
+    <div id="invOpResumoCalculo" style="background:var(--bg2);border:1px solid var(--borda);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--texto2)">
+      Total da operação: <b style="color:var(--texto)">R$ 0,00</b>
+    </div>
+    <label>Observações (opcional)</label>
+    <input type="text" id="invOpObs" placeholder="Ex.: Lote fracionário, dividendos reinvestidos...">
+    <div class="modal-acoes">
+      <button class="btn-sec" id="invOpCancelar">Cancelar</button>
+      <button id="invOpSalvar">Salvar operação</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===== Ícones SVG (estilo Lucide, stroke currentColor) =====
 const P = {
@@ -1014,7 +1258,8 @@ const mesesLongos = ["janeiro","fevereiro","março","abril","maio","junho","julh
 // Classes de investimento com ícones SVG e cores vivas
 const INV_CLASSES = [
   { chave: "Fundo Imobiliário", ico: P.building, cor: "#8b5cf6", tipos: ["FII", "FUNDO IMOBILIARIO", "REIT"] },
-  { chave: "Ações", ico: P.trend, cor: "#3b82f6", tipos: ["STOCK", "ACAO", "AÇÃO", "ACOES", "EQUITY", "BDR", "SHARES", "EQUITIES"] },
+  { chave: "Ações", ico: P.trend, cor: "#3b82f6", tipos: ["STOCK", "ACAO", "AÇÃO", "ACOES", "EQUITY", "SHARES", "EQUITIES"] },
+  { chave: "BDR", ico: P.trend, cor: "#6366f1", tipos: ["BDR"] },
   { chave: "Fundo de Renda Fixa", ico: P.bars, cor: "#06b6d4", tipos: ["FUNDO DE RENDA FIXA", "FUNDO RENDA FIXA", "FIXED INCOME FUND", "MUTUAL FUND", "FUNDO", "FUND"] },
   { chave: "ETF", ico: P.package, cor: "#14b8a6", tipos: ["ETF", "EXCHANGE TRADED FUND", "EXCHANGE TRADED"] },
   { chave: "Tesouro", ico: P.shield, cor: "#f59e0b", tipos: ["TESOURO", "TREASURY", "LTN", "NTN", "LFT"] },
@@ -1022,24 +1267,31 @@ const INV_CLASSES = [
   { chave: "Criptoativos", ico: P.coins, cor: "#f97316", tipos: ["CRYPTO", "CRIPTO", "BITCOIN", "BTC", "ETHEREUM", "ETH"] },
 ];
 
+const ETFS_B3_SET = new Set(["BOVA11", "IVVB11", "SMAL11", "HASH11", "NASD11", "XINA11", "DIVO11", "SPXI11", "GOLD11", "BITH11", "ETHE11", "QBTC11", "WRLD11", "ACWI11"]);
+const UNITS_ACOES_B3_SET = new Set(["TAEE11", "ALUP11", "BRBI11", "SANB11", "KLBN11", "ENGI11", "SAPR11", "BPAC11", "IGTI11", "TIET11", "AESB11", "BIDI11", "SULA11"]);
+
 function classificarInvestimento(inv) {
   const type = (inv.type || "").toUpperCase();
   const subtype = (inv.subtype || "").toUpperCase().replace(/_/g, " ").replace(/-/g, " ");
   const name = (inv.name || "").toUpperCase();
-  const code = (inv.code || "").toUpperCase();
+  const code = (inv.code || "").toUpperCase().replace(/^([A-Z]{4}\d{1,2})F$/, "$1");
   const alvo = type + " " + subtype + " " + name + " " + code;
 
-  const ehETF = type.includes("ETF") || subtype.includes("ETF") || name.includes("ETF") || code.includes("ETF");
+  const ehETF = ETFS_B3_SET.has(code) || ETFS_B3_SET.has(name) || type.includes("ETF") || subtype.includes("ETF") || name.includes("ETF") || code.includes("ETF");
   if (ehETF) return INV_CLASSES.find(x => x.chave === "ETF");
+
+  if (UNITS_ACOES_B3_SET.has(code) || UNITS_ACOES_B3_SET.has(name)) {
+    return INV_CLASSES.find(x => x.chave === "Ações");
+  }
 
   const ehFII =
     subtype.includes("REAL ESTATE") || subtype.includes("FII") || subtype.includes("IMOBILIARIO") ||
     name.includes("FII") || name.includes("FUNDO IMOBILIARIO") || name.includes("IMOBILIARIO") ||
     code.includes("FII") ||
-    /11$/.test(code) || /11$/.test(name);
+    /^[A-Z]{4}1[12]$/.test(code) || /^[A-Z]{4}1[12]$/.test(name);
   if (ehFII) return INV_CLASSES.find(x => x.chave === "Fundo Imobiliário");
 
-  const prioridade = ["Tesouro", "CDB", "Ações", "Criptoativos", "Fundo de Renda Fixa"];
+  const prioridade = ["Tesouro", "CDB", "Ações", "BDR", "Criptoativos", "Fundo de Renda Fixa"];
   for (const chave of prioridade) {
     const c = INV_CLASSES.find(x => x.chave === chave);
     if (c && c.tipos.some(x => alvo.includes(x))) return c;
@@ -1120,7 +1372,14 @@ document.querySelectorAll(".nav-item").forEach((el) => {
     document.getElementById(alvo).classList.add("ativa");
     document.getElementById("tituloPagina").textContent = TITULOS[alvo] || alvo;
     window.scrollTo({ top: 0, behavior: "smooth" });
-    if (alvo === "investimentos") { renderGraficoDist(); renderGraficoPatrimonio(); }
+    if (alvo === "investimentos") {
+      if (typeof invSubAba !== "undefined" && invSubAba === "operacoes") {
+        carregarCarteiraOperacoes();
+      } else {
+        renderGraficoDist();
+        renderGraficoPatrimonio();
+      }
+    }
     if (alvo === "cobrancas") carregarCobrancas();
   });
 });
@@ -1367,10 +1626,16 @@ function renderTabelaTodas() {
 
   if (txBusca) {
     const q = txBusca.toLowerCase();
-    lista = lista.filter(t =>
-      (t.merchant || "").toLowerCase().includes(q) ||
-      (t.description || "").toLowerCase().includes(q) ||
-      (t.category || "").toLowerCase().includes(q));
+    const qNum = q.replace(/\./g, "").replace(",", ".");
+    lista = lista.filter(t => {
+      const valStr = Math.abs(t.amount || 0).toFixed(2);
+      const valBr = fmt(Math.abs(t.amount || 0)).toLowerCase();
+      return (t.merchant || "").toLowerCase().includes(q) ||
+        (t.description || "").toLowerCase().includes(q) ||
+        (t.category || "").toLowerCase().includes(q) ||
+        valBr.includes(q) ||
+        valStr.includes(qNum);
+    });
   }
 
   document.getElementById("tabelaTodas").innerHTML = montarTabela(lista, "todas");
@@ -1883,6 +2148,712 @@ function renderInstituicoes(invInst) {
       }).join("")}
     </div>`;
 }
+
+// ===== Investimentos: Sub-aba Operações & Preço Médio (Planilha B3 + Corretagem XP) =====
+let invSubAba = "visao";
+let carteiraDados = null;
+let invIncluirTaxasXP = true;
+let invPosicaoAba = "ativas";
+let invPosicaoClasse = "todas";
+let invPosicaoBuscaTxt = "";
+let invHistTipo = "todos";
+let invHistAno = "todos";
+let invHistClasse = "todas";
+let invHistBuscaTxt = "";
+let invOpEditandoId = null;
+
+function fmtQtd(q) {
+  const n = Number(q) || 0;
+  if (Number.isInteger(n)) return String(n);
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+}
+
+function corClasseAtivo(classe) {
+  const obj = INV_CLASSES.find(c => c.chave === classe);
+  return obj ? obj.cor : "#94a3b8";
+}
+
+// Alternar entre "Visão Geral" e "Operações & Preço Médio"
+document.querySelectorAll("#invSubTabs .tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    invSubAba = tab.dataset.invAba;
+    document.querySelectorAll("#invSubTabs .tab").forEach(t => t.classList.toggle("ativo", t.dataset.invAba === invSubAba));
+    const visaoEl = document.getElementById("invConteudo");
+    const opEl = document.getElementById("invOperacoesConteudo");
+    const acoesTopo = document.getElementById("invAcoesTopo");
+
+    if (invSubAba === "operacoes") {
+      visaoEl.style.display = "none";
+      opEl.style.display = "block";
+      acoesTopo.style.display = "flex";
+      carregarCarteiraOperacoes();
+    } else {
+      visaoEl.style.display = "block";
+      opEl.style.display = "none";
+      acoesTopo.style.display = "none";
+      renderGraficoDist();
+      renderGraficoPatrimonio();
+    }
+  });
+});
+
+document.getElementById("chkTaxasXP").addEventListener("change", (e) => {
+  invIncluirTaxasXP = e.target.checked;
+  carregarCarteiraOperacoes();
+});
+
+async function carregarCarteiraOperacoes() {
+  try {
+    const q = invIncluirTaxasXP ? "1" : "0";
+    carteiraDados = await fetch(`/api/carteira?incluirTaxas=${q}`).then(r => r.json());
+    renderCarteiraResumo();
+    popularSeletorSimulador();
+    renderTabelaPosicoes();
+    popularFiltrosHistorico();
+    renderTabelaOperacoes();
+  } catch (err) {
+    document.getElementById("invTabelaPosicoes").innerHTML = blocoErro("Não foi possível carregar as operações da carteira.");
+  }
+}
+
+function renderCarteiraResumo() {
+  if (!carteiraDados || !carteiraDados.resumo) return;
+  const r = carteiraDados.resumo;
+  const diffTaxas = r.custoTotalComTaxas - r.custoTotalSemTaxas;
+
+  const rentCor = r.lucroNaoRealizado >= 0 ? "positivo" : "negativo";
+  const rentSinal = r.lucroNaoRealizado >= 0 ? "+" : "";
+  const realCor = r.lucroRealizadoTotal >= 0 ? "positivo" : "negativo";
+  const realSinal = r.lucroRealizadoTotal >= 0 ? "+" : "";
+
+  document.getElementById("invOpResumoCards").innerHTML = `
+    <div class="painel mini">
+      <div class="mini-topo"><span class="mini-ico" style="color:#3b82f6;background:rgba(59,130,246,.12)">${svg(P.layers, 14)}</span><div class="label">Custo em Carteira</div></div>
+      <div class="value">${fmt(r.custoTotalCarteira)}</div>
+      <div class="sub">${r.ativosEmCarteira} ativos em carteira • ${invIncluirTaxasXP ? "c/ taxas XP (" + fmt(diffTaxas) + ")" : "sem corretagem"}</div>
+    </div>
+    <div class="painel mini">
+      <div class="mini-topo"><span class="mini-ico" style="color:#22c55e;background:rgba(34,197,94,.12)">${svg(P.trend, 14)}</span><div class="label">Resultado a Mercado (Pluggy)</div></div>
+      <div class="value ${rentCor}">${rentSinal}${fmt(r.lucroNaoRealizado)}</div>
+      <div class="sub">Cotados: ${fmtCompact(r.mercadoAtivasComPluggy)} vs PM ${fmtCompact(r.custoAtivasComPluggy)} (${pctTxt(r.rentabilidadeCarteiraPct)})</div>
+    </div>
+    <div class="painel mini">
+      <div class="mini-topo"><span class="mini-ico" style="color:#f59e0b;background:rgba(245,158,11,.12)">${svg(P.coins, 14)}</span><div class="label">Vendas &amp; Lucro Realizado</div></div>
+      <div class="value ${realCor}">${realSinal}${fmt(r.lucroRealizadoTotal)}</div>
+      <div class="sub">Total vendido: ${fmt(r.totalVendasBruto)} • ${r.ativosEncerrados} posições encerradas</div>
+    </div>
+    <div class="painel mini">
+      <div class="mini-topo"><span class="mini-ico" style="color:#8b5cf6;background:rgba(139,92,246,.12)">${svg(P.shield, 14)}</span><div class="label">Corretagem XP Acumulada</div></div>
+      <div class="value">${fmt(r.totalTaxasXP)}</div>
+      <div class="sub">${r.qtdOrdensComTaxa} ordens de Ações/ETF/BDR (R$ 4,90) • FII/Tesouro: R$ 0</div>
+    </div>
+  `;
+}
+
+// ===== Simulador de Valor de Venda & Lucro Líquido =====
+function popularSeletorSimulador(ativoPreferido = null) {
+  if (!carteiraDados) return;
+  const ativas = carteiraDados.posicoes.filter(p => p.emCarteira);
+  const sel = document.getElementById("simAtivoSel");
+  const atual = ativoPreferido || sel.value || (ativas[0] && ativas[0].ativo);
+
+  sel.innerHTML = ativas.map(p =>
+    `<option value="${escHtml(p.ativo)}" ${p.ativo === atual ? "selected" : ""}>${escHtml(p.ativo)} (${fmtQtd(p.cotas)} cotas • PM ${fmt(p.precoMedio)})</option>`
+  ).join("");
+
+  // Popula datalist para o modal de nova operação
+  const dl = document.getElementById("listaAtivosB3");
+  if (dl) {
+    dl.innerHTML = carteiraDados.ativosDisponiveis.map(a => `<option value="${escHtml(a)}">`).join("");
+  }
+
+  aoTrocarAtivoSimulador( !!ativoPreferido );
+}
+
+function obterPosicaoSimulador() {
+  if (!carteiraDados) return null;
+  const ticker = document.getElementById("simAtivoSel").value;
+  return carteiraDados.posicoes.find(p => p.ativo === ticker) || null;
+}
+
+function aoTrocarAtivoSimulador(forcarReset = false) {
+  const pos = obterPosicaoSimulador();
+  if (!pos) return;
+  const qtdEl = document.getElementById("simQtdInput");
+  const precoEl = document.getElementById("simPrecoInput");
+  const taxaEl = document.getElementById("simTaxaInput");
+  const btnMerc = document.getElementById("btnSimPrecoMercado");
+  const badgeXP = document.getElementById("simBadgeTaxaXP");
+
+  if (forcarReset || !qtdEl.value) {
+    qtdEl.value = pos.cotas;
+  }
+  taxaEl.value = invIncluirTaxasXP ? pos.taxaPadraoXP.toFixed(2) : "0.00";
+  badgeXP.textContent = pos.taxaPadraoXP > 0
+    ? `${pos.classe}: Corretagem XP R$ ${pos.taxaPadraoXP.toFixed(2).replace(".", ",")}`
+    : `${pos.classe}: Taxa Zero na XP (R$ 0,00)`;
+
+  if (pos.temCotacaoPluggy && pos.precoAtual > 0) {
+    btnMerc.style.display = "inline-flex";
+    btnMerc.textContent = `Cotação Pluggy (${fmt(pos.precoAtual)})`;
+    if (forcarReset || !precoEl.value) {
+      precoEl.value = pos.precoAtual.toFixed(2);
+    }
+  } else {
+    btnMerc.style.display = "none";
+    if (forcarReset || !precoEl.value) {
+      precoEl.value = (pos.precoEquilibrioVenda * 1.10).toFixed(2);
+    }
+  }
+
+  atualizarCalculoSimulador();
+}
+
+function atualizarCalculoSimulador() {
+  const pos = obterPosicaoSimulador();
+  const box = document.getElementById("simResultadoBox");
+  if (!pos || !box) return;
+
+  const qtd = parseFloat(String(document.getElementById("simQtdInput").value).replace(",", ".")) || 0;
+  const precoVenda = parseFloat(String(document.getElementById("simPrecoInput").value).replace(",", ".")) || 0;
+  const taxaVenda = Math.max(0, parseFloat(String(document.getElementById("simTaxaInput").value).replace(",", ".")) || 0);
+
+  const pmUnit = pos.precoMedio;
+  const custoProporcional = qtd * pmUnit;
+  const valorBrutoVenda = qtd * precoVenda;
+  const valorLiquidoVenda = valorBrutoVenda - taxaVenda;
+  const lucroLiquido = valorLiquidoVenda - custoProporcional;
+  const lucroPct = custoProporcional > 0 ? (lucroLiquido / custoProporcional) * 100 : 0;
+  const precoEmpateParaQtd = qtd > 0 ? ((custoProporcional + taxaVenda) / qtd) : pmUnit;
+
+  // Estimativa de IR segundo regras B3 para Pessoa Física (Swing Trade)
+  let irEstimado = 0;
+  let regraIrTxt = "Sem lucro tributável na operação";
+  if (lucroLiquido > 0) {
+    if (pos.classe === "Fundo Imobiliário") {
+      irEstimado = lucroLiquido * 0.20;
+      regraIrTxt = `FII (20% s/ lucro): DARF est. ${fmt(irEstimado)}`;
+    } else if (pos.classe === "Ações") {
+      if (valorBrutoVenda <= 20000) {
+        irEstimado = 0;
+        regraIrTxt = "Isento de IR (vendas de Ações ≤ R$ 20 mil/mês)";
+      } else {
+        irEstimado = lucroLiquido * 0.15;
+        regraIrTxt = `Ações > R$ 20k/mês (15%): DARF est. ${fmt(irEstimado)}`;
+      }
+    } else if (pos.classe === "ETF" || pos.classe === "BDR") {
+      irEstimado = lucroLiquido * 0.15;
+      regraIrTxt = `${pos.classe} (15% s/ lucro): DARF est. ${fmt(irEstimado)}`;
+    } else {
+      regraIrTxt = "Retenção na fonte / regra específica da classe";
+    }
+  }
+
+  const lucroPositivo = lucroLiquido >= 0;
+  const corLucro = lucroPositivo ? "var(--verde)" : "var(--vermelho)";
+  const sinal = lucroPositivo ? "+" : "";
+
+  box.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div class="inv-sim-linha">
+        <span>Seu Preço Médio (${invIncluirTaxasXP ? "c/ XP" : "s/ taxa"}):</span>
+        <b>${fmt(pmUnit)}</b>
+      </div>
+      <div class="inv-sim-linha">
+        <span>Preço mínimo p/ empate (c/ taxa de venda):</span>
+        <b style="color:#38bdf8">${fmt(precoEmpateParaQtd)}</b>
+      </div>
+      <div class="inv-sim-linha">
+        <span>Custo de aquisição (${fmtQtd(qtd)} cotas):</span>
+        <b>${fmt(custoProporcional)}</b>
+      </div>
+      <div class="inv-sim-linha">
+        <span>Valor líquido da venda (bruto ${fmt(valorBrutoVenda)} − taxa ${fmt(taxaVenda)}):</span>
+        <b>${fmt(valorLiquidoVenda)}</b>
+      </div>
+      <div class="inv-sim-linha" style="font-size:11.5px">
+        <span>Imposto de Renda (Swing Trade):</span>
+        <span>${regraIrTxt}</span>
+      </div>
+    </div>
+    <div class="inv-sim-destaque">
+      <div>
+        <div style="font-size:11.5px;color:var(--texto2)">Resultado Líquido da Venda</div>
+        <div style="font-size:20px;font-weight:800;color:${corLucro}">
+          ${sinal}${fmt(lucroLiquido)} <span style="font-size:13px;font-weight:600">(${pctTxt(lucroPct)})</span>
+        </div>
+      </div>
+      <button type="button" class="btn-mini" id="btnRegistrarVendaSimulada" style="border-color:rgba(34,197,94,.4);color:var(--verde)">
+        Registrar venda
+      </button>
+    </div>
+  `;
+
+  document.getElementById("btnRegistrarVendaSimulada").addEventListener("click", () => {
+    abrirModalInvOperacao({
+      tipo: "venda",
+      ativo: pos.ativo,
+      classe: pos.classe,
+      cotas: qtd,
+      preco_unitario: precoVenda,
+      taxa_corretagem: taxaVenda,
+      mes_ano: mesAtualIso(),
+    });
+  });
+}
+
+document.getElementById("simAtivoSel").addEventListener("change", () => aoTrocarAtivoSimulador(true));
+["simQtdInput", "simPrecoInput", "simTaxaInput"].forEach(id => {
+  document.getElementById(id).addEventListener("input", atualizarCalculoSimulador);
+});
+
+document.querySelectorAll("[data-sim-alvo]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const pos = obterPosicaoSimulador();
+    if (!pos) return;
+    const alvo = btn.dataset.simAlvo;
+    const qtd = parseFloat(String(document.getElementById("simQtdInput").value).replace(",", ".")) || pos.cotas || 1;
+    const taxaVenda = Math.max(0, parseFloat(String(document.getElementById("simTaxaInput").value).replace(",", ".")) || 0);
+    const empateUnit = ((qtd * pos.precoMedio) + taxaVenda) / qtd;
+
+    if (alvo === "empate") {
+      document.getElementById("simPrecoInput").value = empateUnit.toFixed(2);
+    } else if (alvo === "mercado" && pos.precoAtual > 0) {
+      document.getElementById("simPrecoInput").value = pos.precoAtual.toFixed(2);
+    } else {
+      const pct = parseFloat(alvo) || 0;
+      document.getElementById("simPrecoInput").value = (empateUnit * (1 + pct / 100)).toFixed(2);
+    }
+    atualizarCalculoSimulador();
+  });
+});
+
+function simularAtivoNaCalculadora(ativo) {
+  popularSeletorSimulador(ativo);
+  const painel = document.getElementById("painelSimuladorVenda");
+  if (painel) painel.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// ===== Tabela de Posição Consolidada & Preço Médio =====
+function renderTabelaPosicoes() {
+  if (!carteiraDados) return;
+  const area = document.getElementById("invTabelaPosicoes");
+  const ativasCount = carteiraDados.posicoes.filter(p => p.emCarteira).length;
+  const encCount = carteiraDados.posicoes.filter(p => !p.emCarteira).length;
+
+  document.getElementById("tabPosAtivas").textContent = `Em Carteira (${ativasCount})`;
+  document.getElementById("tabPosEncerradas").textContent = `Posições Encerradas (${encCount})`;
+
+  let lista = carteiraDados.posicoes.filter(p => invPosicaoAba === "ativas" ? p.emCarteira : !p.emCarteira);
+  if (invPosicaoClasse !== "todas") {
+    lista = lista.filter(p => p.classe === invPosicaoClasse);
+  }
+  if (invPosicaoBuscaTxt) {
+    const q = invPosicaoBuscaTxt.toUpperCase();
+    lista = lista.filter(p => p.ativo.toUpperCase().includes(q) || p.classe.toUpperCase().includes(q));
+  }
+
+  if (!lista.length) {
+    area.innerHTML = `<div class="vazio">Nenhum ativo encontrado para este filtro.</div>`;
+    return;
+  }
+
+  if (invPosicaoAba === "ativas") {
+    area.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Ativo</th>
+            <th style="text-align:right">Cotas</th>
+            <th style="text-align:right">Preço Médio</th>
+            <th style="text-align:right">Venda Empate</th>
+            <th style="text-align:right">Custo Total</th>
+            <th style="text-align:right">Saldo / Cotação Atual</th>
+            <th style="text-align:right">Resultado Atual</th>
+            <th style="text-align:right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lista.map(p => {
+            const cor = corClasseAtivo(p.classe);
+            const subPM = p.taxasAcumuladas > 0
+              ? `<div class="cat-sub">${invIncluirTaxasXP ? "s/ taxa: " + fmt(p.precoMedioSemTaxas) : "c/ XP: " + fmt(p.precoMedioComTaxas)}</div>`
+              : `<div class="cat-sub">Isento de corretagem XP</div>`;
+
+            const colMercado = p.temCotacaoPluggy
+              ? `<div style="font-weight:600">${fmt(p.saldoPluggy)}</div><div class="cat-sub">~${fmt(p.precoAtual)} / cota</div>`
+              : `<span style="color:var(--texto2)">—</span>`;
+
+            let colResultado = `<span style="color:var(--texto2)">—</span>`;
+            if (p.temCotacaoPluggy && p.resultadoAtual !== null) {
+              const pos = p.resultadoAtual >= 0;
+              const cls = pos ? "positivo" : "negativo";
+              const sin = pos ? "+" : "";
+              colResultado = `<div class="${cls}" style="font-weight:700">${sin}${fmt(p.resultadoAtual)}</div>
+                              <div class="cat-sub ${cls}">${pctTxt(p.resultadoAtualPct)}</div>`;
+            }
+
+            return `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-weight:700;font-size:14px">${escHtml(p.ativo)}</span>
+                    <span class="inv-classe-pill" style="color:${cor};background:${cor}1f">${escHtml(p.classe)}</span>
+                  </div>
+                  <div class="cat-sub">${p.qtdCompras} compra(s)${p.qtdVendas ? " • " + p.qtdVendas + " venda(s)" : ""} • Última: ${mesCurto(p.ultimaOperacaoMes)}</div>
+                </td>
+                <td style="text-align:right;font-weight:600">${fmtQtd(p.cotas)}</td>
+                <td style="text-align:right">
+                  <div style="font-weight:700;color:#fff">${fmt(p.precoMedio)}</div>
+                  ${subPM}
+                </td>
+                <td style="text-align:right;color:#38bdf8;font-weight:600" title="Preço mínimo de venda por cota para empatar já descontando a taxa de venda da XP">
+                  ${fmt(p.precoEquilibrioVenda)}
+                </td>
+                <td style="text-align:right;font-weight:600">${fmt(p.custoTotal)}</td>
+                <td style="text-align:right">${colMercado}</td>
+                <td style="text-align:right">${colResultado}</td>
+                <td style="text-align:right;white-space:nowrap">
+                  <div class="cob-acoes" style="justify-content:flex-end">
+                    <button class="btn-mini" data-simular-ativo="${escHtml(p.ativo)}">Simular venda</button>
+                    <button class="btn-mini" data-comprar-ativo="${escHtml(p.ativo)}" data-classe-ativo="${escHtml(p.classe)}">+ Compra</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  } else {
+    area.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Ativo Encerrado</th>
+            <th style="text-align:right">Cotas Vendidas</th>
+            <th style="text-align:right">PM de Compra</th>
+            <th style="text-align:right">PM de Venda</th>
+            <th style="text-align:right">Total Vendido</th>
+            <th style="text-align:right">Resultado Realizado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lista.map(p => {
+            const cor = corClasseAtivo(p.classe);
+            const pos = (p.lucroRealizado || 0) >= 0;
+            const cls = pos ? "positivo" : "negativo";
+            const sin = pos ? "+" : "";
+            return `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-weight:700">${escHtml(p.ativo)}</span>
+                    <span class="inv-classe-pill" style="color:${cor};background:${cor}1f">${escHtml(p.classe)}</span>
+                  </div>
+                  <div class="cat-sub">Encerrado em ${mesNome(p.ultimaOperacaoMes)}</div>
+                </td>
+                <td style="text-align:right;font-weight:600">${fmtQtd(p.cotasVendidas)}</td>
+                <td style="text-align:right">${fmt(p.precoMedio)}</td>
+                <td style="text-align:right;font-weight:600">${p.precoMedioVenda ? fmt(p.precoMedioVenda) : "—"}</td>
+                <td style="text-align:right;font-weight:600">${fmt(p.totalVendidoBruto)}</td>
+                <td style="text-align:right;font-weight:700" class="${cls}">${sin}${fmt(p.lucroRealizado)}</td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  area.querySelectorAll("[data-simular-ativo]").forEach(btn => {
+    btn.addEventListener("click", () => simularAtivoNaCalculadora(btn.dataset.simularAtivo));
+  });
+  area.querySelectorAll("[data-comprar-ativo]").forEach(btn => {
+    btn.addEventListener("click", () => abrirModalInvOperacao({
+      tipo: "compra",
+      ativo: btn.dataset.comprarAtivo,
+      classe: btn.dataset.classeAtivo,
+      mes_ano: mesAtualIso(),
+    }));
+  });
+}
+
+document.querySelectorAll("#invPosicaoTabs .tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    invPosicaoAba = tab.dataset.posAba;
+    document.querySelectorAll("#invPosicaoTabs .tab").forEach(t => t.classList.toggle("ativo", t.dataset.posAba === invPosicaoAba));
+    renderTabelaPosicoes();
+  });
+});
+document.getElementById("invPosicaoClasseSel").addEventListener("change", (e) => {
+  invPosicaoClasse = e.target.value;
+  renderTabelaPosicoes();
+});
+document.getElementById("invPosicaoBusca").addEventListener("input", (e) => {
+  invPosicaoBuscaTxt = e.target.value.trim();
+  renderTabelaPosicoes();
+});
+
+// ===== Histórico de Operações (Compras e Vendas) =====
+function popularFiltrosHistorico() {
+  if (!carteiraDados) return;
+  const selAno = document.getElementById("invHistAnoSel");
+  const anos = carteiraDados.anosDisponiveis || [];
+  selAno.innerHTML = `<option value="todos">Todos os anos</option>` +
+    anos.map(a => `<option value="${a}" ${a === invHistAno ? "selected" : ""}>${a}</option>`).join("");
+
+  const ops = carteiraDados.operacoes || [];
+  const nCompras = ops.filter(o => o.tipo === "compra").length;
+  const nVendas = ops.filter(o => o.tipo === "venda").length;
+  document.getElementById("tabHistTodos").textContent = `Todas (${ops.length})`;
+  document.getElementById("tabHistCompras").textContent = `Compras (${nCompras})`;
+  document.getElementById("tabHistVendas").textContent = `Vendas (${nVendas})`;
+}
+
+function renderTabelaOperacoes() {
+  if (!carteiraDados) return;
+  const area = document.getElementById("invTabelaOperacoes");
+  let lista = (carteiraDados.operacoes || []).slice();
+
+  if (invHistTipo !== "todos") {
+    lista = lista.filter(o => o.tipo === invHistTipo);
+  }
+  if (invHistAno !== "todos") {
+    lista = lista.filter(o => (o.mes_ano || "").startsWith(invHistAno));
+  }
+  if (invHistClasse !== "todas") {
+    lista = lista.filter(o => o.classe === invHistClasse);
+  }
+  if (invHistBuscaTxt) {
+    const q = invHistBuscaTxt.toUpperCase();
+    lista = lista.filter(o =>
+      (o.ativo || "").toUpperCase().includes(q) ||
+      (o.ticker_original || "").toUpperCase().includes(q) ||
+      (o.observacoes || "").toUpperCase().includes(q)
+    );
+  }
+
+  if (!lista.length) {
+    area.innerHTML = `<div class="vazio">Nenhuma operação encontrada para este filtro.</div>`;
+    return;
+  }
+
+  area.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Mês/Ano</th>
+          <th>Tipo</th>
+          <th>Ativo</th>
+          <th style="text-align:right">Cotas</th>
+          <th style="text-align:right">Preço Unit.</th>
+          <th style="text-align:right">Taxa XP</th>
+          <th style="text-align:right">Total Operação</th>
+          <th style="text-align:right">PM / Resultado</th>
+          <th style="text-align:right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(op => {
+          const cor = corClasseAtivo(op.classe);
+          const ehCompra = op.tipo === "compra";
+          const fracBadge = op.ticker_original && op.ticker_original !== op.ativo
+            ? `<span style="font-size:10.5px;color:var(--texto2);margin-left:4px">(${escHtml(op.ticker_original)})</span>`
+            : "";
+          const taxaTxt = (op.taxa_corretagem || 0) > 0
+            ? fmt(op.taxa_corretagem)
+            : `<span style="color:var(--texto2)">Isento</span>`;
+          const totalExibido = invIncluirTaxasXP ? op.valor_liquido : op.valor_bruto;
+
+          let colPmOuRes = "";
+          if (ehCompra) {
+            colPmOuRes = `<div style="font-weight:600">PM: ${fmt(op.pm_apos)}</div>`;
+          } else {
+            const res = op.resultado_venda ?? 0;
+            const pos = res >= 0;
+            colPmOuRes = `<div class="${pos ? "positivo" : "negativo"}" style="font-weight:700">${pos ? "+" : ""}${fmt(res)}</div>
+                          <div class="cat-sub">s/ PM ${fmt(op.pm_apos)}</div>`;
+          }
+
+          return `
+            <tr>
+              <td style="white-space:nowrap;color:var(--texto2)">${mesNome(op.mes_ano)}</td>
+              <td><span class="inv-tipo-badge ${ehCompra ? "compra" : "venda"}">${ehCompra ? "Compra" : "Venda"}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span style="font-weight:700">${escHtml(op.ativo)}</span>${fracBadge}
+                  <span class="inv-classe-pill" style="color:${cor};background:${cor}1f">${escHtml(op.classe)}</span>
+                </div>
+                ${op.observacoes ? `<div class="cat-sub">${escHtml(op.observacoes)}</div>` : ""}
+              </td>
+              <td style="text-align:right;font-weight:600">${fmtQtd(op.cotas)}</td>
+              <td style="text-align:right">${fmt(op.preco_unitario)}</td>
+              <td style="text-align:right">${taxaTxt}</td>
+              <td style="text-align:right;font-weight:700">${fmt(totalExibido)}</td>
+              <td style="text-align:right">${colPmOuRes}</td>
+              <td style="text-align:right;white-space:nowrap">
+                <div class="cob-acoes" style="justify-content:flex-end">
+                  <button class="btn-mini" data-editar-op="${op.id}">Editar</button>
+                  <button class="btn-mini perigo" data-remover-op="${op.id}">Excluir</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+
+  area.querySelectorAll("[data-editar-op]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = Number(btn.dataset.editarOp);
+      const op = (carteiraDados.operacoes || []).find(x => x.id === id);
+      if (op) abrirModalInvOperacao(op);
+    });
+  });
+
+  area.querySelectorAll("[data-remover-op]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = Number(btn.dataset.removerOp);
+      const op = (carteiraDados.operacoes || []).find(x => x.id === id);
+      if (!op) return;
+      if (!confirm(`Excluir a ${op.tipo} de ${fmtQtd(op.cotas)} cota(s) de ${op.ativo} em ${mesNome(op.mes_ano)}?`)) return;
+      await fetch(`/api/carteira/operacoes/${id}`, { method: "DELETE" });
+      carregarCarteiraOperacoes();
+    });
+  });
+}
+
+document.querySelectorAll("#invHistTipoTabs .tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    invHistTipo = tab.dataset.histTipo;
+    document.querySelectorAll("#invHistTipoTabs .tab").forEach(t => t.classList.toggle("ativo", t.dataset.histTipo === invHistTipo));
+    renderTabelaOperacoes();
+  });
+});
+document.getElementById("invHistAnoSel").addEventListener("change", (e) => {
+  invHistAno = e.target.value;
+  renderTabelaOperacoes();
+});
+document.getElementById("invHistClasseSel").addEventListener("change", (e) => {
+  invHistClasse = e.target.value;
+  renderTabelaOperacoes();
+});
+document.getElementById("invHistBusca").addEventListener("input", (e) => {
+  invHistBuscaTxt = e.target.value.trim();
+  renderTabelaOperacoes();
+});
+
+// ===== Modal de Nova / Editar Operação =====
+function taxaPadraoXPPorClasse(classe) {
+  return ["Ações", "ETF", "BDR"].includes(classe) ? 4.90 : 0.00;
+}
+
+function atualizarResumoModalInvOp() {
+  const tipo = document.getElementById("invOpTipo").value;
+  const cotas = parseFloat(String(document.getElementById("invOpCotas").value).replace(",", ".")) || 0;
+  const preco = parseFloat(String(document.getElementById("invOpPreco").value).replace(",", ".")) || 0;
+  const taxa = Math.max(0, parseFloat(String(document.getElementById("invOpTaxa").value).replace(",", ".")) || 0);
+  const bruto = cotas * preco;
+  const liquido = tipo === "compra" ? (bruto + taxa) : (bruto - taxa);
+  const pmUnitOp = cotas > 0 ? (liquido / cotas) : 0;
+
+  document.getElementById("invOpResumoCalculo").innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+      <span>Valor bruto: <b style="color:var(--texto)">${fmt(bruto)}</b> + Taxa XP: <b style="color:var(--texto)">${fmt(taxa)}</b></span>
+      <span>Total ${tipo === "compra" ? "c/ taxa" : "líquido"}: <b style="color:var(--verde)">${fmt(liquido)}</b> (${fmt(pmUnitOp)}/cota)</span>
+    </div>
+  `;
+}
+
+async function autoClassificarInputAtivo() {
+  const raw = document.getElementById("invOpAtivo").value.trim();
+  if (!raw) return;
+  try {
+    const info = await fetch(`/api/carteira/classificar?ativo=${encodeURIComponent(raw)}`).then(r => r.json());
+    if (info && info.classe) {
+      document.getElementById("invOpClasse").value = info.classe;
+      document.getElementById("invOpTaxa").value = Number(info.taxaXP || 0).toFixed(2);
+      document.getElementById("invOpTaxaHint").textContent = info.taxaXP > 0
+        ? `Padrão XP para ${info.classe}: R$ 4,90 por ordem.`
+        : `${info.classe}: Isento de corretagem na XP (R$ 0,00).`;
+      atualizarResumoModalInvOp();
+    }
+  } catch (_) {}
+}
+
+function abrirModalInvOperacao(op = null) {
+  invOpEditandoId = op && op.id ? op.id : null;
+  document.getElementById("invOpModalTitulo").textContent = invOpEditandoId ? "Editar operação" : "Nova operação";
+  document.getElementById("invOpTipo").value = (op && op.tipo) || "compra";
+  document.getElementById("invOpMesAno").value = (op && op.mes_ano) || mesAtualIso();
+  document.getElementById("invOpAtivo").value = (op && (op.ticker_original || op.ativo)) || "";
+  const classeInicial = (op && op.classe) || "Fundo Imobiliário";
+  document.getElementById("invOpClasse").value = classeInicial;
+  document.getElementById("invOpCotas").value = (op && op.cotas) ?? "";
+  document.getElementById("invOpPreco").value = (op && op.preco_unitario) ?? "";
+  const taxaInicial = op && op.taxa_corretagem !== undefined
+    ? Number(op.taxa_corretagem)
+    : taxaPadraoXPPorClasse(classeInicial);
+  document.getElementById("invOpTaxa").value = taxaInicial.toFixed(2);
+  document.getElementById("invOpObs").value = (op && op.observacoes) || "";
+  atualizarResumoModalInvOp();
+  document.getElementById("modalInvOperacao").classList.add("aberto");
+}
+
+document.getElementById("btnNovaOperacaoInv").addEventListener("click", () => abrirModalInvOperacao());
+document.getElementById("btnNovaOpHist").addEventListener("click", () => abrirModalInvOperacao());
+document.getElementById("invOpAtivo").addEventListener("blur", autoClassificarInputAtivo);
+document.getElementById("invOpAtivo").addEventListener("change", autoClassificarInputAtivo);
+document.getElementById("invOpClasse").addEventListener("change", (e) => {
+  const taxa = taxaPadraoXPPorClasse(e.target.value);
+  document.getElementById("invOpTaxa").value = taxa.toFixed(2);
+  document.getElementById("invOpTaxaHint").textContent = taxa > 0
+    ? `Padrão XP para ${e.target.value}: R$ 4,90 por ordem.`
+    : `${e.target.value}: Isento de corretagem na XP (R$ 0,00).`;
+  atualizarResumoModalInvOp();
+});
+["invOpTipo", "invOpCotas", "invOpPreco", "invOpTaxa"].forEach(id => {
+  document.getElementById(id).addEventListener("input", atualizarResumoModalInvOp);
+});
+document.getElementById("invOpCancelar").addEventListener("click", () => {
+  document.getElementById("modalInvOperacao").classList.remove("aberto");
+});
+document.getElementById("modalInvOperacao").addEventListener("click", (e) => {
+  if (e.target.id === "modalInvOperacao") e.target.classList.remove("aberto");
+});
+document.getElementById("invOpSalvar").addEventListener("click", async () => {
+  const tipo = document.getElementById("invOpTipo").value;
+  const mes_ano = document.getElementById("invOpMesAno").value;
+  const ativo = document.getElementById("invOpAtivo").value.trim().toUpperCase();
+  const classe = document.getElementById("invOpClasse").value;
+  const cotas = parseFloat(String(document.getElementById("invOpCotas").value).replace(",", "."));
+  const preco_unitario = parseFloat(String(document.getElementById("invOpPreco").value).replace(",", "."));
+  const taxa_corretagem = Math.max(0, parseFloat(String(document.getElementById("invOpTaxa").value).replace(",", ".")) || 0);
+  const observacoes = document.getElementById("invOpObs").value.trim() || null;
+
+  if (!ativo) return alert("Informe o código do ativo (ex: PETR4, MXRF11).");
+  if (!mes_ano || !/^\d{4}-\d{2}$/.test(mes_ano)) return alert("Selecione o mês e ano da operação.");
+  if (!Number.isFinite(cotas) || cotas <= 0) return alert("Informe uma quantidade de cotas válida.");
+  if (!Number.isFinite(preco_unitario) || preco_unitario < 0) return alert("Informe o preço unitário da operação.");
+
+  const payload = { ativo, classe, tipo, cotas, preco_unitario, taxa_corretagem, mes_ano, observacoes };
+  const url = invOpEditandoId ? `/api/carteira/operacoes/${invOpEditandoId}` : "/api/carteira/operacoes";
+  const method = invOpEditandoId ? "PUT" : "POST";
+
+  const resp = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) {
+    const erro = await resp.json().catch(() => ({}));
+    return alert(erro.error || "Erro ao salvar operação.");
+  }
+  document.getElementById("modalInvOperacao").classList.remove("aberto");
+  carregarCarteiraOperacoes();
+});
 
 // ===== Cobranças (aba independente) =====
 let cobAno = new Date().getFullYear();

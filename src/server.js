@@ -9,6 +9,7 @@ const { monthly, ranking, assinaturas, insights, melhores, saldoTotal, transacoe
 const db = require("./db");
 const registerFeatures = require("./features");
 const registerCobrancas = require("./cobrancas");
+const registerCarteira = require("./carteira");
 
 const app = Fastify();
 app.register(cors, { origin: true });
@@ -46,6 +47,9 @@ const registrarSnapshot = registerFeatures(app, db, { saldoTotal, investimentos 
 
 // ===== Cobranças: aba independente de controle de clientes =====
 registerCobrancas(app, db);
+
+// ===== Carteira: operações (compra/venda), preço médio e simulador de venda =====
+registerCarteira(app, db);
 
 async function runSync() {
   try {

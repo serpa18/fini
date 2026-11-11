@@ -81,15 +81,26 @@ function saldoPorInstituicao() {
             SUM(balance) AS total,
             COUNT(*) AS contas
      FROM accounts
+     WHERE UPPER(COALESCE(type, '')) NOT LIKE '%CREDIT%'
+       AND UPPER(COALESCE(subtype, '')) <> 'CREDIT_CARD'
      GROUP BY instituicao
      ORDER BY total DESC`
   ).all();
 }
 
 function saldoTotal() {
-  const row = db.prepare("SELECT SUM(balance) AS total FROM accounts").get();
+  const row = db.prepare(
+    `SELECT SUM(balance) AS total
+     FROM accounts
+     WHERE UPPER(COALESCE(type, '')) NOT LIKE '%CREDIT%'
+       AND UPPER(COALESCE(subtype, '')) <> 'CREDIT_CARD'`
+  ).get();
   const tipos = db.prepare(
-    "SELECT subtype, COUNT(*) AS n FROM accounts GROUP BY subtype"
+    `SELECT subtype, COUNT(*) AS n
+     FROM accounts
+     WHERE UPPER(COALESCE(type, '')) NOT LIKE '%CREDIT%'
+       AND UPPER(COALESCE(subtype, '')) <> 'CREDIT_CARD'
+     GROUP BY subtype`
   ).all();
   return { total: row.total || 0, contas: tipos, instituicoes: saldoPorInstituicao() };
 }
@@ -100,6 +111,7 @@ function investimentosPorInstituicao() {
             SUM(balance) AS total,
             COUNT(*) AS ativos
      FROM investments
+     WHERE COALESCE(balance, 0) > 0
      GROUP BY instituicao
      ORDER BY total DESC`
   ).all();
@@ -115,7 +127,9 @@ function transacoesRecentes(limit = 8) {
 }
 
 function investimentos() {
-  return db.prepare("SELECT id, name, type, subtype, code, balance FROM investments").all();
+  return db.prepare(
+    "SELECT id, name, type, subtype, code, balance FROM investments WHERE COALESCE(balance, 0) > 0"
+  ).all();
 }
 
 function faturas() {
