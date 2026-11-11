@@ -1,13 +1,17 @@
-# Banco de dados local (SQLite)
+# Banco de dados local (SQLite) e backups
 data/*.db
 data/*.db-shm
 data/*.db-wal
 data/*.db-journal
 data/*.bkp
+backups/
 *.db
 *.db-shm
 *.db-wal
 *.db-journal
+
+# Dependências Node
+node_modules/
 
 # Variáveis de ambiente com credenciais
 .env

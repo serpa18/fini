@@ -6,6 +6,8 @@
 //   // chame await registrarSnapshot() ao final de cada sincronização
 // ============================================================
 
+const { norm, normalizarPadraoRegra } = require("./sync");
+
 module.exports = function registerFeatures(app, db, helpers = {}) {
   // ---- Tabelas (criadas automaticamente) ----
   db.exec(`
@@ -37,7 +39,7 @@ module.exports = function registerFeatures(app, db, helpers = {}) {
       const rows = db.prepare(`
         SELECT category, SUM(ABS(amount)) as total
         FROM transactions
-        WHERE strftime('%Y-%m', date) = ? AND amount < 0
+        WHERE strftime('%Y-%m', date) = ? AND amount < 0 AND category <> 'Transferências'
         GROUP BY category
       `).all(mes);
       for (const r of rows) gastoPorCat[r.category] = r.total;
@@ -94,6 +96,104 @@ module.exports = function registerFeatures(app, db, helpers = {}) {
       investimentos: r.investimentos,
       patrimonio: r.patrimonio,
     }));
+  });
+
+  // ---- Categorias e Edição Manual de Transações ----
+  const CATEGORIAS_PADRAO = [
+    "Alimentação",
+    "Compras",
+    "Transporte",
+    "Assinaturas",
+    "Saúde",
+    "Lazer",
+    "Moradia",
+    "Educação",
+    "Serviços",
+    "Proventos",
+    "Transferências",
+    "Outros",
+  ];
+
+  app.get("/api/transactions/categories", async () => {
+    const dbCats = db.prepare("SELECT DISTINCT category FROM transactions WHERE category IS NOT NULL AND category <> ''").all().map((r) => r.category);
+    const set = new Set([...CATEGORIAS_PADRAO, ...dbCats]);
+    return { categories: Array.from(set) };
+  });
+
+  app.put("/api/transactions/:id/category", async (req, reply) => {
+    const { id } = req.params;
+    const body = req.body || {};
+    const category = String(body.category || "").trim();
+    const aplicarSempre = Boolean(body.aplicarSempre);
+    if (!category) {
+      reply.code(400);
+      return { error: "Categoria inválida" };
+    }
+
+    const tx = db.prepare("SELECT id, description, merchant FROM transactions WHERE id = ?").get(id);
+    if (!tx) {
+      reply.code(404);
+      return { error: "Transação não encontrada" };
+    }
+
+    db.prepare("UPDATE transactions SET category = ?, manual_category = 1 WHERE id = ?").run(category, id);
+    db.prepare(`
+      INSERT OR REPLACE INTO tx_manual_overrides (tx_id, category, updated_at)
+      VALUES (?, ?, datetime('now'))
+    `).run(id, category);
+
+    let patternAplicado = null;
+    let atualizadasEmLote = 0;
+
+    if (aplicarSempre) {
+      const pattern = body.customPattern ? norm(body.customPattern) : normalizarPadraoRegra(tx.merchant, tx.description);
+      if (pattern && pattern.length >= 2) {
+        patternAplicado = pattern;
+        db.prepare(`
+          INSERT OR REPLACE INTO tx_category_rules (pattern, category, updated_at)
+          VALUES (?, ?, datetime('now'))
+        `).run(pattern, category);
+
+        const candidatas = db.prepare(`
+          SELECT id, merchant, description
+          FROM transactions
+          WHERE id <> ? AND COALESCE(manual_category, 0) = 0
+        `).all(id);
+        const updLote = db.prepare("UPDATE transactions SET category = ? WHERE id = ?");
+        for (const c of candidatas) {
+          const cPadrao = normalizarPadraoRegra(c.merchant, c.description);
+          const cTexto = norm((c.merchant || "") + " " + (c.description || ""));
+          if (cPadrao === pattern || (pattern.length >= 3 && cTexto.includes(pattern))) {
+            updLote.run(category, c.id);
+            atualizadasEmLote++;
+          }
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      id,
+      category,
+      suggestedPattern: normalizarPadraoRegra(tx.merchant, tx.description),
+      patternAplicado,
+      atualizadasEmLote,
+    };
+  });
+
+  app.get("/api/category-rules", async () => {
+    const rules = db.prepare("SELECT pattern, category, updated_at FROM tx_category_rules ORDER BY updated_at DESC").all();
+    return { rules };
+  });
+
+  app.delete("/api/category-rules", async (req, reply) => {
+    const pattern = String(req.query.pattern || "").trim();
+    if (!pattern) {
+      reply.code(400);
+      return { error: "Informe ?pattern=..." };
+    }
+    db.prepare("DELETE FROM tx_category_rules WHERE pattern = ?").run(pattern);
+    return { ok: true };
   });
 
   // Grava um snapshot de patrimônio (chamado ao final de cada sync).

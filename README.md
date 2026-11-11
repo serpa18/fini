@@ -39,16 +39,22 @@ Além das finanças pessoais, inclui um módulo independente de **cobranças de 
 - Compras parceladas ativas com número de parcelas
 
 ### Investimentos
-- Patrimônio investido consolidado
-- Classificação automática por classe de ativo (FIIs, ações, fundos, ETFs, Tesouro, CDB, cripto)
+- Patrimônio investido consolidado (Visão Geral)
+- Classificação automática por classe de ativo (FIIs, ações, fundos, ETFs, BDRs, Tesouro, CDB, cripto)
 - Distribuição da carteira em pizza com legenda detalhada
 - Evolução do patrimônio mês a mês (saldo + investimentos)
 - Montante investido por instituição
+- **Operações & Preço Médio**: registro de compras e vendas com cálculo automático da taxa XP, preço médio (com/sem taxas), preço de equilíbrio de venda e simulador de lucro
+- **Proventos**: auto-importação de dividendos, rendimentos de FII, JCP, amortizações, cupons e aluguel BTC + cadastro manual e cálculo de Yield on Cost (YoC)
 
-### Categorias
-- Orçamento mensal por categoria com barras de progresso
-- Alertas visuais ao aproximar ou estourar o limite
+### Categorias & Lançamentos
+- Edição manual de categoria direto nas transações, com opção **Aplicar sempre** para memorizar regras por estabelecimento/descrição
+- Orçamento mensal por categoria com barras de progresso e alertas visuais
 - Ranking de gastos do mês
+
+### Backup & Exportação
+- Backup diário automático e seguro do SQLite (`VACUUM INTO`) em **2 ambientes**: HD local e Google Drive (via montagem ZimaOS)
+- Download imediato do banco `.db` e exportação CSV (transações, operações, posições, proventos e cobranças)
 
 ### Cobranças (módulo independente)
 - Cadastro de clientes com valor de contrato, dia da cobrança e vencimento (ou indeterminado)
@@ -79,26 +85,29 @@ Além das finanças pessoais, inclui um módulo independente de **cobranças de 
 ## 🚀 Instalação
 
 ### Pré-requisitos
-- Node.js 20+ (ou Docker)
+- Node.js 24+ (usa `node:sqlite` nativo) ou Docker
 - Conta no [Pluggy](https://pluggy.ai) com `clientId` e `clientSecret`
 - Git
 
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/serpa18/fine.git
-cd fine
+git clone https://github.com/serpa18/fini.git
+cd fini
 ```
 
 ### 2. Configure as variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto:
+Copie `.env.example` para `.env` e preencha suas credenciais:
 
 ```env
 PLUGGY_CLIENT_ID=seu_client_id
 PLUGGY_CLIENT_SECRET=seu_client_secret
 PORT=8181
 APP_USER_NAME=Seu Nome
+BACKUP_DIR_LOCAL=/app/backups/local
+BACKUP_DIR_CLOUD=/app/backups/gdrive
+BACKUP_KEEP=15
 ```
 
 ### 3. Instale as dependências e inicie
@@ -108,17 +117,13 @@ npm install
 npm start
 ```
 
-### Alternativa: Docker
+### Alternativa: Docker Compose (ZimaOS / servidor doméstico com Watchtower)
 
 ```bash
-docker build -t fini .
-docker run -d --name fini \
-  -p 8181:8181 \
-  --env-file .env \
-  -v $(pwd)/data:/app/data \
-  --restart=always \
-  fini
+docker compose up -d
 ```
+
+O `docker-compose.yml` já sobe o **Fini** com volumes para `./data`, backup local e Google Drive, além do **Watchtower** para atualização automática via `ghcr.io/serpa18/fini:latest`.
 
 ## 💻 Uso
 
@@ -133,25 +138,26 @@ Acesse **http://localhost:8181** no navegador.
 
 > 💡 O banco de dados SQLite é criado e migrado automaticamente na primeira execução.
 
-### Atualização em produção (servidor doméstico)
+### Atualização automática (GitHub Actions + Watchtower)
 
-```bash
-cd /caminho/do/projeto && git pull && docker restart fini
-```
+A cada push na `main`, o workflow em `.github/workflows/docker-publish.yml` publica uma imagem multi-arquitetura (`amd64` + `arm64`) em `ghcr.io/serpa18/fini:latest`, permitindo que o **Watchtower** atualize o container automaticamente no ZimaOS.
 
 ## 📁 Estrutura do projeto
 
 ```
-fine/
+fini/
 ├── src/
 │   ├── server.js        # Servidor Fastify, rotas da API e cron
-│   ├── db.js            # Conexão e schema do SQLite
-│   ├── sync.js          # Sincronização com o Pluggy (Open Finance)
+│   ├── db.js            # Conexão, WAL, restauração automática e schema SQLite
+│   ├── sync.js          # Sincronização Pluggy + categorização com regras manuais
 │   ├── analyze.js       # Métricas e consultas (mensal, ranking, insights…)
-│   ├── features.js      # Orçamento por categoria + histórico de patrimônio
-│   └── cobrancas.js     # Módulo de cobranças de clientes
+│   ├── features.js      # Orçamentos, patrimônio e edição/regras de categorias
+│   ├── cobrancas.js     # Módulo de cobranças de clientes
+│   ├── carteira.js      # Carteira B3, preço médio, taxa XP e simulador
+│   ├── proventos.js     # Dividendos, FIIs, JCP, aluguel BTC e Yield on Cost
+│   └── backup.js        # Backup dual (HD + Google Drive) e exportações CSV
 ├── public/
-│   ├── index.html       # Interface completa (SPA)
+│   ├── index.html       # Interface completa (SPA Liquid Glass)
 │   └── favicon.svg
 ├── .env                 # Variáveis de ambiente (não versionar)
 ├── Dockerfile

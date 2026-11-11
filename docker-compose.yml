@@ -1,0 +1,29 @@
+services:
+  fini:
+    image: ghcr.io/serpa18/fini:latest
+    build: .
+    container_name: fini
+    restart: unless-stopped
+    ports:
+      - "8181:8181"
+    env_file:
+      - .env
+    environment:
+      - PORT=8181
+      - BACKUP_DIR_LOCAL=/app/backups/local
+      - BACKUP_DIR_CLOUD=/app/backups/gdrive
+      - BACKUP_KEEP=${BACKUP_KEEP:-15}
+    volumes:
+      - ./data:/app/data
+      - ${ZIMA_BACKUP_LOCAL:-./backups/local}:/app/backups/local
+      - ${ZIMA_BACKUP_GDRIVE:-./backups/gdrive}:/app/backups/gdrive
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: fini-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --label-enable --cleanup --interval 300

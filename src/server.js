@@ -4,12 +4,14 @@ const Fastify = require("fastify");
 const cors = require("@fastify/cors");
 const cron = require("node-cron");
 const fastifyStatic = require("@fastify/static");
-const { sync } = require("./sync");
+const { sync, aplicarCorrecaoHistoricaCategorias } = require("./sync");
 const { monthly, ranking, assinaturas, insights, melhores, saldoTotal, transacoesRecentes, investimentos, investimentosPorInstituicao, faturas, parcelas, syncInfo } = require("./analyze");
 const db = require("./db");
 const registerFeatures = require("./features");
 const registerCobrancas = require("./cobrancas");
 const registerCarteira = require("./carteira");
+const { registerProventos } = require("./proventos");
+const registerBackup = require("./backup");
 
 const app = Fastify();
 app.register(cors, { origin: true });
@@ -31,7 +33,12 @@ app.get("/api/investimentos/instituicoes", () => investimentosPorInstituicao());
 app.get("/api/faturas", () => faturas());
 app.get("/api/parcelas", () => parcelas());
 app.get("/api/syncinfo", () => syncInfo());
-app.post("/api/sync", async () => { await sync(); return { ok: true }; });
+app.post("/api/sync", async () => {
+  await sync();
+  proventos.importarDeTransacoes();
+  await registrarSnapshot();
+  return { ok: true };
+});
 
 // ===== Perfil: nome e avatar por instância (variáveis de ambiente) =====
 app.get("/api/perfil", () => {
@@ -42,22 +49,33 @@ app.get("/api/perfil", () => {
   };
 });
 
-// ===== Features: orçamento por categoria + histórico de patrimônio =====
+// Migração idempotente única de categorias antigas (cartão / transferências internas)
+aplicarCorrecaoHistoricaCategorias();
+
+// ===== Features: orçamento por categoria + histórico de patrimônio + regras manuais =====
 const registrarSnapshot = registerFeatures(app, db, { saldoTotal, investimentos });
 
 // ===== Cobranças: aba independente de controle de clientes =====
 registerCobrancas(app, db);
 
 // ===== Carteira: operações (compra/venda), preço médio e simulador de venda =====
-registerCarteira(app, db);
+const carteira = registerCarteira(app, db);
+
+// ===== Proventos: dividendos, FIIs, JCP e aluguel BTC =====
+const proventos = registerProventos(app, db, carteira);
+
+// ===== Backup em 2 ambientes (HD Local + Google Drive) e Exportação CSV =====
+const backup = registerBackup(app, db, carteira);
 
 async function runSync() {
   try {
     await sync();
+    proventos.importarDeTransacoes();
     await registrarSnapshot(); // grava o snapshot de patrimônio após cada sync
   } catch (err) {
     console.error("Erro na sincronização:", err.message);
   }
+  backup.executarBackupAutomatico();
 }
 
 runSync();

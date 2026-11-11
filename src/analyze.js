@@ -119,7 +119,7 @@ function investimentosPorInstituicao() {
 
 function transacoesRecentes(limit = 8) {
   return db.prepare(
-    `SELECT date, amount, description, category, merchant
+    `SELECT id, date, amount, description, category, merchant, COALESCE(manual_category, 0) AS manual_category
      FROM transactions
      ORDER BY date DESC
      LIMIT ?`

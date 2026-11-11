@@ -64,6 +64,16 @@ function init() {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+    CREATE TABLE IF NOT EXISTS tx_manual_overrides (
+      tx_id TEXT PRIMARY KEY,
+      category TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS tx_category_rules (
+      pattern TEXT PRIMARY KEY,
+      category TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   const cols = db.prepare("PRAGMA table_info(accounts)").all().map((c) => c.name);
@@ -82,6 +92,7 @@ function init() {
   if (!colTx.includes("installment_number")) db.exec("ALTER TABLE transactions ADD COLUMN installment_number INTEGER");
   if (!colTx.includes("total_installments")) db.exec("ALTER TABLE transactions ADD COLUMN total_installments INTEGER");
   if (!colTx.includes("status")) db.exec("ALTER TABLE transactions ADD COLUMN status TEXT");
+  if (!colTx.includes("manual_category")) db.exec("ALTER TABLE transactions ADD COLUMN manual_category INTEGER DEFAULT 0");
 }
 
 init();

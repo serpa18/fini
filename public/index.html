@@ -871,6 +871,34 @@
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
   ::selection { background: rgba(139,124,255,.45); color: #fff; }
 
+  /* ===== Edição de Categoria, Proventos & Backup ===== */
+  .tx-cat-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10);
+    color: var(--texto2); border-radius: 999px; padding: 2px 9px;
+    font-size: 11px; font-weight: 500; cursor: pointer; margin-top: 3px;
+    transition: all .18s ease;
+  }
+  .tx-cat-btn:hover { background: rgba(139,124,255,.22); border-color: rgba(139,124,255,.45); color: #fff; }
+  .tx-cat-btn.manual { background: rgba(139,124,255,.16); border-color: rgba(139,124,255,.38); color: #d8d4ff; }
+  .prov-tipo-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; border: 1px solid rgba(255,255,255,.10);
+  }
+  .bkp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+  @media (max-width: 680px) { .bkp-grid { grid-template-columns: 1fr; } }
+  .bkp-env-card {
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10);
+    border-radius: 14px; padding: 12px 14px;
+  }
+  .bkp-env-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .bkp-exports-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
+  .regra-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08); font-size: 12px;
+  }
+
   /* Entrada suave das seções */
   .secao.ativa { animation: secaoIn .35s cubic-bezier(.2,.8,.2,1); }
   @keyframes secaoIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -973,6 +1001,10 @@
         <div class="subtitulo" id="saudacao"></div>
       </div>
       <div class="acoes">
+        <button class="btn-sec" id="btnBackupExport" title="Backup automático (HD + Google Drive) e exportação CSV" style="display:inline-flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+          <span>Backup</span>
+        </button>
         <button id="btnSync">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           <span id="btnSyncTxt">Sincronizar agora</span>
@@ -1058,6 +1090,7 @@
         <div class="tabs inv-main-tabs" id="invSubTabs">
           <div class="tab ativo" data-inv-aba="visao">Visão Geral</div>
           <div class="tab" data-inv-aba="operacoes">Operações &amp; Preço Médio</div>
+          <div class="tab" data-inv-aba="proventos">Proventos</div>
         </div>
         <div id="invAcoesTopo" style="display:none;gap:10px;align-items:center;flex-wrap:wrap">
           <label class="inv-toggle-xp" title="Na XP, Ações/Units/ETFs/BDRs têm taxa padrão de R$ 4,90 por ordem; FIIs, Tesouro Direto e Cripto têm taxa zero (R$ 0,00).">
@@ -1065,6 +1098,10 @@
             <span>Incluir corretagem XP (R$ 4,90)</span>
           </label>
           <button id="btnNovaOperacaoInv">+ Nova operação</button>
+        </div>
+        <div id="invProvAcoesTopo" style="display:none;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn-sec" id="btnSyncProventosInv" title="Reimportar proventos detectados nas transações da XP/Pluggy">Sincronizar da XP</button>
+          <button id="btnNovoProventoInv">+ Novo provento</button>
         </div>
       </div>
       <div id="invConteudo"></div>
@@ -1170,6 +1207,56 @@
             <input type="text" id="invHistBusca" placeholder="Filtrar por código do ativo..." style="flex:1;min-width:180px">
           </div>
           <div id="invTabelaOperacoes"></div>
+        </div>
+      </div>
+
+      <!-- Sub-aba 3: Proventos (Dividendos, FIIs, JCP, Aluguel BTC) -->
+      <div id="invProventosConteudo" style="display:none">
+        <div class="cob-resumo" id="invProvResumoCards"></div>
+
+        <div class="grid2" style="margin-bottom:20px">
+          <div class="painel">
+            <div class="painel-topo">
+              <div>
+                <h2>Proventos por mês</h2>
+                <div class="desc" style="margin-bottom:0">Renda passiva recebida mês a mês</div>
+              </div>
+              <select id="provAnoFiltro" style="min-width:96px"></select>
+            </div>
+            <div class="cob-grafico-box" style="margin-top:12px"><canvas id="graficoProventosMes"></canvas></div>
+          </div>
+
+          <div class="painel">
+            <div class="painel-topo">
+              <div>
+                <h2>Renda por ativo &amp; Yield on Cost</h2>
+                <div class="desc" style="margin-bottom:0">Retorno sobre o custo investido (YoC) por papel</div>
+              </div>
+            </div>
+            <div id="invProvPorAtivo" style="max-height:300px;overflow:auto;margin-top:8px"></div>
+          </div>
+        </div>
+
+        <div class="painel">
+          <div class="painel-topo">
+            <div>
+              <h2>Histórico de Proventos</h2>
+              <div class="desc" style="margin-bottom:0" id="invProvHistDesc">Importados automaticamente da XP + lançamentos manuais</div>
+            </div>
+          </div>
+          <div class="filtros" style="margin-top:10px">
+            <select id="provFiltroTipo">
+              <option value="todos">Todos os tipos</option>
+              <option value="Dividendo">Dividendo</option>
+              <option value="Rendimento">Rendimento FII</option>
+              <option value="JCP">JCP</option>
+              <option value="Aluguel BTC">Aluguel BTC</option>
+              <option value="Amortização">Amortização</option>
+              <option value="Cupom Tesouro">Cupom Tesouro</option>
+            </select>
+            <input type="text" id="provFiltroBusca" placeholder="Filtrar por ativo ou observação..." style="flex:1;min-width:180px">
+          </div>
+          <div id="invTabelaProventos"></div>
         </div>
       </div>
     </section>
@@ -1450,6 +1537,116 @@
   </div>
 </div>
 
+<!-- Modal: Editar Categoria da Transação + Regras -->
+<div class="modal-fundo" id="modalEditarCatTx">
+  <div class="modal" style="max-width:480px">
+    <h3 id="editCatTitulo">Editar categoria</h3>
+    <div class="desc" id="editCatSub" style="margin-bottom:8px"></div>
+    <label for="editCatSelect">Nova categoria</label>
+    <select id="editCatSelect"></select>
+    <div id="editCatCustomWrap" style="display:none;margin-top:8px">
+      <label for="editCatCustomInput">Nome da categoria personalizada</label>
+      <input type="text" id="editCatCustomInput" placeholder="Ex.: Pets, Presentes, Impostos...">
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer;font-weight:500">
+      <input type="checkbox" id="editCatAplicarSempre" style="width:auto;margin-top:3px">
+      <span>Aplicar sempre para lançamentos parecidos (salva regra e corrige o histórico não editado)</span>
+    </label>
+    <div id="editCatPadraoWrap" style="display:none;margin-top:8px">
+      <label for="editCatPadraoInput">Padrão memorizado (texto/estabelecimento)</label>
+      <input type="text" id="editCatPadraoInput" placeholder="Ex.: ifood, uber, posto...">
+    </div>
+    <div id="editCatRegrasBox" style="margin-top:14px"></div>
+    <div class="modal-acoes">
+      <button class="btn-sec" id="editCatCancelar">Cancelar</button>
+      <button id="editCatSalvar">Salvar categoria</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo / Editar Provento -->
+<div class="modal-fundo" id="modalInvProvento">
+  <div class="modal">
+    <h3 id="provModalTitulo">Novo provento</h3>
+    <input type="hidden" id="provModalId">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label for="provData">Data do recebimento</label>
+        <input type="date" id="provData">
+      </div>
+      <div>
+        <label for="provTipo">Tipo</label>
+        <select id="provTipo">
+          <option value="Rendimento">Rendimento FII</option>
+          <option value="Dividendo">Dividendo</option>
+          <option value="JCP">JCP</option>
+          <option value="Aluguel BTC">Aluguel BTC</option>
+          <option value="Amortização">Amortização</option>
+          <option value="Cupom Tesouro">Cupom Tesouro</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:10px;margin-top:8px">
+      <div>
+        <label for="provAtivo">Ativo / Ticker</label>
+        <input type="text" id="provAtivo" list="provAtivosDatalist" placeholder="Ex.: MXRF11, PETR4..." style="text-transform:uppercase">
+        <datalist id="provAtivosDatalist"></datalist>
+      </div>
+      <div>
+        <label for="provValor">Valor líquido (R$)</label>
+        <input type="number" id="provValor" min="0.01" step="0.01" placeholder="Ex.: 45,20">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+      <div>
+        <label for="provCotas">Cotas base (opcional)</label>
+        <input type="number" id="provCotas" min="0" step="any" placeholder="Ex.: 100">
+      </div>
+      <div>
+        <label for="provObs">Observação (opcional)</label>
+        <input type="text" id="provObs" placeholder="Ex.: Creditado na corretora">
+      </div>
+    </div>
+    <div class="modal-acoes">
+      <button class="btn-sec" id="provCancelar">Cancelar</button>
+      <button id="provSalvar">Salvar provento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Backup em 2 Ambientes & Exportação CSV -->
+<div class="modal-fundo" id="modalBackupExport">
+  <div class="modal" style="max-width:620px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h3 style="margin:0">Backup &amp; Exportação</h3>
+      <span class="cob-badge pago" id="bkpBadgeKeep">Retenção: 15 cópias</span>
+    </div>
+    <div class="desc" style="margin-top:4px">
+      Cópias automáticas diárias do SQLite via <code>VACUUM INTO</code> em 2 ambientes independentes
+    </div>
+    <div class="bkp-grid" id="bkpEnvGrid">
+      <div class="bkp-env-card"><div class="desc">Carregando status…</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button id="btnExecutarBackupAgora">Executar backup nos 2 ambientes agora</button>
+      <a href="/api/backup/download-db" class="btn-sec" style="text-decoration:none;display:inline-flex;align-items:center;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600">Baixar banco (.db)</a>
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:12.5px;font-weight:600;color:var(--texto2);margin-bottom:4px">Exportar planilhas (CSV UTF-8)</div>
+      <div class="bkp-exports-grid">
+        <a href="/api/export/transacoes" class="btn-mini" style="text-decoration:none;text-align:center;padding:8px">Transações</a>
+        <a href="/api/export/operacoes" class="btn-mini" style="text-decoration:none;text-align:center;padding:8px">Operações B3</a>
+        <a href="/api/export/posicoes" class="btn-mini" style="text-decoration:none;text-align:center;padding:8px">Posições &amp; PM</a>
+        <a href="/api/export/proventos" class="btn-mini" style="text-decoration:none;text-align:center;padding:8px">Proventos</a>
+        <a href="/api/export/cobrancas" class="btn-mini" style="text-decoration:none;text-align:center;padding:8px">Cobranças</a>
+      </div>
+    </div>
+    <div class="modal-acoes">
+      <button class="btn-sec" id="bkpFechar">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // Tema Liquid Glass: tipografia e cores padrão dos gráficos
 if (window.Chart) { Chart.defaults.font.family = "Inter, system-ui, sans-serif"; Chart.defaults.color = "#a6abd0"; }
@@ -1658,10 +1855,16 @@ function montarTabela(tx, filtro) {
         const valor = t.amount >= 0
           ? `<span class="positivo">+${fmt(t.amount)}</span>`
           : `<span class="negativo">${fmt(t.amount)}</span>`;
+        const titulo = escHtml(t.merchant || t.description || "Sem descrição");
+        const catEsc = escHtml(t.category || "Outros");
+        const manualCls = t.manual_category ? " manual" : "";
+        const badgeCat = t.id
+          ? `<button type="button" class="tx-cat-btn${manualCls}" data-edit-tx-id="${escHtml(t.id)}" title="Clique para alterar a categoria">${catEsc} ✎</button>`
+          : `<div class="cat-sub">${catEsc}</div>`;
         return `<tr>
           <td style="color:var(--texto2);white-space:nowrap">${data}</td>
           <td><span class="icone-cat">${iconeCat(t.category)}</span></td>
-          <td><div class="cat-nome">${t.merchant || t.description || "Sem descrição"}</div><div class="cat-sub">${t.category}</div></td>
+          <td><div class="cat-nome">${titulo}</div>${badgeCat}</td>
           <td style="text-align:right;font-weight:600;white-space:nowrap">${valor}</td>
         </tr>`;
       }).join("")}
@@ -1681,7 +1884,7 @@ function montarTabelaParcelas(parcs) {
         const status = (p.status || "") === "PENDING" ? "• Pendente" : "";
         return `<tr>
           <td style="color:var(--texto2);white-space:nowrap">${fmtData(p.date)}</td>
-          <td><div class="cat-nome">${p.merchant || p.description || "Sem descrição"}</div><div class="cat-sub">${p.category || ""} ${status}</div></td>
+          <td><div class="cat-nome">${escHtml(p.merchant || p.description || "Sem descrição")}</div><div class="cat-sub">${escHtml(p.category || "")} ${escHtml(status)}</div></td>
           <td>${parcela}</td>
           <td style="text-align:right;font-weight:600;white-space:nowrap"><span class="negativo">${fmt(p.amount)}</span></td>
         </tr>`;
@@ -1830,7 +2033,7 @@ async function carregarVisao() {
         </div>`;
     }
 
-    await carregarCardsMes();
+    await carregarCardsMes(saldoRes, invRes);
 
     if (monthlyAno.length) {
       await carregarCategorias(monthlyAno[0].mes);
@@ -1903,10 +2106,12 @@ function renderTabelaTodas() {
   document.getElementById("tabelaTodas").innerHTML = montarTabela(lista, "todas");
 }
 
-async function carregarCardsMes() {
-  const insights = await fetch(`/api/insights?mes=${mesSelecionado}`).then(r => r.json());
-  const saldoRes = await fetch("/api/saldo").then(r => r.json());
-  const invRes = await fetch("/api/investimentos").then(r => r.json());
+async function carregarCardsMes(saldoCache = null, invCache = null) {
+  const [insights, saldoRes, invRes] = await Promise.all([
+    fetch(`/api/insights?mes=${mesSelecionado}`).then(r => r.json()),
+    saldoCache ? Promise.resolve(saldoCache) : fetch("/api/saldo").then(r => r.json()),
+    invCache ? Promise.resolve(invCache) : fetch("/api/investimentos").then(r => r.json()),
+  ]);
 
   const ordenado = [...dadosMensais].sort((a, b) => a.mes.localeCompare(b.mes));
   const idx = ordenado.findIndex(m => m.mes === mesSelecionado);
@@ -2037,7 +2242,7 @@ async function carregarCategorias(mes) {
       return `
       <div class="cat-linha">
         <div class="icone-cat">${iconeCat(r.category)}</div>
-        <div class="cat-info"><div class="nome">${r.category}</div></div>
+        <div class="cat-info"><div class="nome">${escHtml(r.category)}</div></div>
         ${barra}
         <div class="cat-valor negativo">${fmt(r.total)}</div>
         <div class="cat-pct">${pctTxt2}</div>
@@ -2065,12 +2270,12 @@ async function carregarOrcamento() {
       const cor = estourado ? "var(--vermelho)" : b.pct > 80 ? "#fbbf24" : "var(--verde)";
       return `
         <div class="orc-linha">
-          <div class="cat-info"><div class="nome">${b.category}</div><div class="sub">${b.pct}% do limite</div></div>
+          <div class="cat-info"><div class="nome">${escHtml(b.category)}</div><div class="sub">${b.pct}% do limite</div></div>
           <div class="cat-barra"><div class="fill" style="width:${Math.min(100, b.pct)}%;background:${cor}"></div></div>
           <div class="cat-valor ${estourado ? "negativo" : ""}">${fmt(b.spent)} / ${fmt(b.limit)}</div>
           <div class="cat-acoes">
-            <button class="btn-mini" data-editar="${b.category}">Editar</button>
-            <button class="btn-mini perigo" data-remover="${b.category}">Remover</button>
+            <button class="btn-mini" data-editar="${escHtml(b.category)}">Editar</button>
+            <button class="btn-mini perigo" data-remover="${escHtml(b.category)}">Remover</button>
           </div>
         </div>`;
     }).join("") + `
@@ -2435,24 +2640,28 @@ function corClasseAtivo(classe) {
   return obj ? obj.cor : "#94a3b8";
 }
 
-// Alternar entre "Visão Geral" e "Operações & Preço Médio"
+// Alternar entre "Visão Geral", "Operações & Preço Médio" e "Proventos"
 document.querySelectorAll("#invSubTabs .tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     invSubAba = tab.dataset.invAba;
     document.querySelectorAll("#invSubTabs .tab").forEach(t => t.classList.toggle("ativo", t.dataset.invAba === invSubAba));
     const visaoEl = document.getElementById("invConteudo");
     const opEl = document.getElementById("invOperacoesConteudo");
+    const provEl = document.getElementById("invProventosConteudo");
     const acoesTopo = document.getElementById("invAcoesTopo");
+    const provAcoesTopo = document.getElementById("invProvAcoesTopo");
+
+    visaoEl.style.display = invSubAba === "visao" ? "block" : "none";
+    opEl.style.display = invSubAba === "operacoes" ? "block" : "none";
+    provEl.style.display = invSubAba === "proventos" ? "block" : "none";
+    acoesTopo.style.display = invSubAba === "operacoes" ? "flex" : "none";
+    provAcoesTopo.style.display = invSubAba === "proventos" ? "flex" : "none";
 
     if (invSubAba === "operacoes") {
-      visaoEl.style.display = "none";
-      opEl.style.display = "block";
-      acoesTopo.style.display = "flex";
       carregarCarteiraOperacoes();
+    } else if (invSubAba === "proventos") {
+      carregarProventos();
     } else {
-      visaoEl.style.display = "block";
-      opEl.style.display = "none";
-      acoesTopo.style.display = "none";
       renderGraficoDist();
       renderGraficoPatrimonio();
     }
@@ -2732,6 +2941,7 @@ function renderTabelaPosicoes() {
             <th style="text-align:right">Custo Total</th>
             <th style="text-align:right">Saldo / Cotação Atual</th>
             <th style="text-align:right">Resultado Atual</th>
+            <th style="text-align:right">Proventos</th>
             <th style="text-align:right">Ações</th>
           </tr>
         </thead>
@@ -2755,6 +2965,11 @@ function renderTabelaPosicoes() {
                               <div class="cat-sub ${cls}">${pctTxt(p.resultadoAtualPct)}</div>`;
             }
 
+            const provTot = Number(p.proventosTotal) || 0;
+            const colProventos = provTot > 0
+              ? `<div class="positivo" style="font-weight:600">+${fmt(provTot)}</div>${p.yocPct !== null ? `<div class="cat-sub">YoC ${p.yocPct.toFixed(1)}%</div>` : ""}`
+              : `<span style="color:var(--texto2)">—</span>`;
+
             return `
               <tr>
                 <td>
@@ -2775,6 +2990,7 @@ function renderTabelaPosicoes() {
                 <td style="text-align:right;font-weight:600">${fmt(p.custoTotal)}</td>
                 <td style="text-align:right">${colMercado}</td>
                 <td style="text-align:right">${colResultado}</td>
+                <td style="text-align:right">${colProventos}</td>
                 <td style="text-align:right;white-space:nowrap">
                   <div class="cob-acoes" style="justify-content:flex-end">
                     <button class="btn-mini" data-simular-ativo="${escHtml(p.ativo)}">Simular venda</button>
@@ -3642,12 +3858,575 @@ document.getElementById("btnVerTodas").addEventListener("click", () => {
   if (navTx) navTx.click();
 });
 
+// ===== Edição manual de categoria em Transações =====
+let editCatTxAtual = null;
+
+async function carregarListaRegras() {
+  const box = document.getElementById("editCatRegrasBox");
+  try {
+    const res = await fetch("/api/category-rules").then(r => r.json());
+    const rules = res.rules || [];
+    if (!rules.length) {
+      box.innerHTML = `<div class="desc" style="margin:0">Nenhuma regra automática salva ainda.</div>`;
+      return;
+    }
+    box.innerHTML = `
+      <div style="font-size:12px;font-weight:600;color:var(--texto2);margin-bottom:6px">Regras memorizadas (${rules.length})</div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:130px;overflow:auto">
+        ${rules.map(r => `
+          <div class="regra-item">
+            <span><code>${escHtml(r.pattern)}</code> → <b>${escHtml(r.category)}</b></span>
+            <button type="button" class="btn-mini perigo" data-del-regra="${escHtml(r.pattern)}">Excluir</button>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  } catch {
+    box.innerHTML = "";
+  }
+}
+
+document.getElementById("editCatRegrasBox").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-del-regra]");
+  if (!btn) return;
+  const pattern = btn.dataset.delRegra;
+  await fetch(`/api/category-rules?pattern=${encodeURIComponent(pattern)}`, { method: "DELETE" });
+  carregarListaRegras();
+});
+
+async function abrirModalEditarCategoriaTx(txId) {
+  const tx = todasTransacoes.find(x => String(x.id) === String(txId));
+  if (!tx) return;
+  editCatTxAtual = tx;
+
+  const titulo = tx.merchant || tx.description || "Transação";
+  document.getElementById("editCatTitulo").textContent = "Alterar categoria";
+  document.getElementById("editCatSub").textContent = `${fmtData(tx.date)} • ${titulo} (${fmt(tx.amount)})`;
+
+  let categorias = [
+    "Alimentação", "Compras", "Transporte", "Assinaturas", "Saúde",
+    "Lazer", "Moradia", "Educação", "Serviços", "Proventos", "Transferências", "Outros"
+  ];
+  try {
+    const res = await fetch("/api/transactions/categories").then(r => r.json());
+    if (Array.isArray(res.categories) && res.categories.length) categorias = res.categories;
+  } catch { /* usa padrão */ }
+
+  const sel = document.getElementById("editCatSelect");
+  sel.innerHTML = categorias.map(c =>
+    `<option value="${escHtml(c)}" ${c === tx.category ? "selected" : ""}>${escHtml(c)}</option>`
+  ).join("") + `<option value="__custom__">+ Outra categoria...</option>`;
+
+  document.getElementById("editCatCustomWrap").style.display = "none";
+  document.getElementById("editCatCustomInput").value = "";
+  document.getElementById("editCatAplicarSempre").checked = false;
+  document.getElementById("editCatPadraoWrap").style.display = "none";
+  const sugestao = (tx.merchant || tx.description || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .trim().replace(/\s+/g, " ");
+  document.getElementById("editCatPadraoInput").value = sugestao;
+
+  await carregarListaRegras();
+  document.getElementById("modalEditarCatTx").classList.add("aberto");
+}
+
+document.getElementById("editCatSelect").addEventListener("change", (e) => {
+  document.getElementById("editCatCustomWrap").style.display = e.target.value === "__custom__" ? "block" : "none";
+});
+
+document.getElementById("editCatAplicarSempre").addEventListener("change", (e) => {
+  document.getElementById("editCatPadraoWrap").style.display = e.target.checked ? "block" : "none";
+});
+
+document.getElementById("editCatCancelar").addEventListener("click", () => {
+  document.getElementById("modalEditarCatTx").classList.remove("aberto");
+});
+document.getElementById("modalEditarCatTx").addEventListener("click", (e) => {
+  if (e.target.id === "modalEditarCatTx") e.target.classList.remove("aberto");
+});
+
+document.getElementById("editCatSalvar").addEventListener("click", async () => {
+  if (!editCatTxAtual) return;
+  const selVal = document.getElementById("editCatSelect").value;
+  const category = selVal === "__custom__"
+    ? document.getElementById("editCatCustomInput").value.trim()
+    : selVal;
+  if (!category) {
+    alert("Informe o nome da categoria.");
+    return;
+  }
+  const aplicarSempre = document.getElementById("editCatAplicarSempre").checked;
+  const customPattern = document.getElementById("editCatPadraoInput").value.trim();
+
+  const btn = document.getElementById("editCatSalvar");
+  btn.disabled = true;
+  try {
+    const r = await fetch(`/api/transactions/${encodeURIComponent(editCatTxAtual.id)}/category`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category, aplicarSempre, customPattern }),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || "Falha ao atualizar categoria");
+    }
+    document.getElementById("modalEditarCatTx").classList.remove("aberto");
+    await carregarVisao();
+  } catch (err) {
+    alert("Erro: " + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Delegação de clique nos badges de categoria nas duas tabelas de transações
+["tabelaRecentes", "tabelaTodas"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-edit-tx-id]");
+      if (btn) abrirModalEditarCategoriaTx(btn.dataset.editTxId);
+    });
+  }
+});
+
+// ===== Módulo Proventos (Dividendos, FIIs, JCP, Aluguel BTC) =====
+let proventosDados = null;
+let chartProventos = null;
+let provAnoSel = "todos";
+let provTipoSel = "todos";
+let provBuscaTxt = "";
+
+function corTipoProvento(tipo) {
+  const mapa = {
+    "Rendimento": "#34d399",
+    "Dividendo": "#60a5fa",
+    "JCP": "#a78bfa",
+    "Aluguel BTC": "#f59e0b",
+    "Amortização": "#38bdf8",
+    "Cupom Tesouro": "#2dd4bf",
+  };
+  return mapa[tipo] || "#94a3b8";
+}
+
+async function carregarProventos() {
+  try {
+    proventosDados = await fetch("/api/proventos").then(r => r.json());
+    popularFiltroAnoProventos();
+    renderProventosResumo();
+    renderProventosGrafico();
+    renderProventosPorAtivo();
+    renderTabelaProventos();
+  } catch (err) {
+    document.getElementById("invTabelaProventos").innerHTML = blocoErro("Erro ao carregar proventos: " + err.message);
+  }
+}
+
+function popularFiltroAnoProventos() {
+  if (!proventosDados) return;
+  const sel = document.getElementById("provAnoFiltro");
+  const anos = proventosDados.anosDisponiveis && proventosDados.anosDisponiveis.length
+    ? proventosDados.anosDisponiveis
+    : Array.from(new Set((proventosDados.porMes || []).map(m => m.mes.slice(0, 4)))).sort().reverse();
+  const atual = provAnoSel;
+  sel.innerHTML = `<option value="todos">Todos os anos</option>` +
+    anos.map(a => `<option value="${a}" ${a === atual ? "selected" : ""}>${a}</option>`).join("");
+  if (atual !== "todos" && !anos.includes(atual)) provAnoSel = "todos";
+}
+
+function renderProventosResumo() {
+  if (!proventosDados || !proventosDados.resumo) return;
+  const r = proventosDados.resumo;
+  const melhorMesObj = (proventosDados.porMes || []).reduce((acc, m) => (!acc || m.total > acc.total ? m : acc), null);
+  const maxMesTxt = melhorMesObj ? `${fmt(melhorMesObj.total)} em ${mesCurto(melhorMesObj.mes)}` : "Sem histórico";
+  const media12m = (r.total12m || 0) / 12;
+  document.getElementById("invProvResumoCards").innerHTML = `
+    <div class="card hero">
+      <div class="label">Total Recebido</div>
+      <div class="value positivo">${fmt(r.totalGeral || 0)}</div>
+      <div class="sub">${r.totalRegistros || 0} pagamento(s) • ${r.qtdAtivosPagantes || 0} ativo(s)</div>
+    </div>
+    <div class="card">
+      <div class="label">Últimos 12 Meses</div>
+      <div class="value positivo">${fmt(r.total12m || 0)}</div>
+      <div class="sub">Média de ${fmt(media12m)}/mês</div>
+    </div>
+    <div class="card">
+      <div class="label">Este Mês</div>
+      <div class="value ${r.mesAtualValor > 0 ? "positivo" : ""}">${fmt(r.mesAtualValor || 0)}</div>
+      <div class="sub">Ano atual: ${fmt(r.totalAno || 0)}</div>
+    </div>
+    <div class="card">
+      <div class="label">Yield on Cost Global (12m)</div>
+      <div class="value" style="color:#60a5fa">${r.yocCarteira12mPct ? r.yocCarteira12mPct.toFixed(2) + "%" : "—"}</div>
+      <div class="sub">Recorde: ${escHtml(maxMesTxt)}</div>
+    </div>
+  `;
+}
+
+function renderProventosGrafico() {
+  if (!proventosDados) return;
+  let serie = [...(proventosDados.porMes || [])];
+  if (provAnoSel !== "todos") {
+    serie = serie.filter(m => m.mes.startsWith(provAnoSel + "-"));
+  }
+  const labels = serie.map(m => mesCurto(m.mes));
+  const vals = serie.map(m => Number(m.total || 0));
+
+  if (chartProventos) { chartProventos.destroy(); chartProventos = null; }
+  const ctx = document.getElementById("graficoProventosMes");
+  if (!ctx) return;
+
+  chartProventos = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Proventos (R$)",
+        data: vals,
+        backgroundColor: "rgba(52, 211, 153, 0.72)",
+        hoverBackgroundColor: "#34d399",
+        borderRadius: 8,
+        maxBarThickness: 36,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(11,13,29,0.92)",
+          titleColor: "#fff",
+          bodyColor: "#34d399",
+          borderColor: "rgba(255,255,255,0.14)",
+          borderWidth: 1,
+          callbacks: { label: (c) => " " + fmt(c.parsed.y) },
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#a6abd0" } },
+        y: {
+          grid: { color: "rgba(255,255,255,.06)" },
+          ticks: { color: "#a6abd0", callback: v => fmtCompact(v) },
+        },
+      },
+    },
+  });
+}
+
+function renderProventosPorAtivo() {
+  if (!proventosDados) return;
+  const lista = proventosDados.porAtivo || [];
+  const box = document.getElementById("invProvPorAtivo");
+  if (!lista.length) {
+    box.innerHTML = `<div class="vazio">Nenhum provento registrado ainda.</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Ativo</th>
+          <th style="text-align:right">12m</th>
+          <th style="text-align:right">Total</th>
+          <th style="text-align:right">YoC (12m)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(a => {
+          const cor = corClasseAtivo(a.classe);
+          const yocTxt = a.yoc12mPct !== null && a.yoc12mPct !== undefined
+            ? `<span style="color:#60a5fa;font-weight:700">${a.yoc12mPct.toFixed(2)}%</span>`
+            : `<span style="color:var(--texto2)">—</span>`;
+          return `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <b>${escHtml(a.ativo)}</b>
+                  <span class="inv-classe-pill" style="color:${cor};background:${cor}1f">${escHtml(a.classe)}</span>
+                </div>
+                <div class="cat-sub">${a.qtdPagamentos} pagamento(s) • Último: ${fmtData(a.ultimoPagamento)}</div>
+              </td>
+              <td style="text-align:right;font-weight:600">${fmt(a.recebido12m)}</td>
+              <td style="text-align:right" class="positivo"><b>${fmt(a.totalRecebido)}</b></td>
+              <td style="text-align:right">${yocTxt}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderTabelaProventos() {
+  if (!proventosDados) return;
+  const todosLanc = proventosDados.lancamentos || [];
+  let lista = [...todosLanc];
+  if (provTipoSel !== "todos") {
+    lista = lista.filter(p => p.tipo === provTipoSel);
+  }
+  if (provBuscaTxt) {
+    const q = provBuscaTxt.toUpperCase();
+    lista = lista.filter(p =>
+      (p.ativo || "").toUpperCase().includes(q) ||
+      (p.descricao || "").toUpperCase().includes(q) ||
+      (p.tipo || "").toUpperCase().includes(q)
+    );
+  }
+
+  const area = document.getElementById("invTabelaProventos");
+  const desc = document.getElementById("invProvHistDesc");
+  if (desc) desc.textContent = `Exibindo ${lista.length} de ${todosLanc.length} provento(s) recebidos`;
+
+  if (!lista.length) {
+    area.innerHTML = `<div class="vazio">Nenhum provento encontrado para este filtro.</div>`;
+    return;
+  }
+
+  area.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Ativo</th>
+          <th>Tipo</th>
+          <th style="text-align:right">Cotas Base</th>
+          <th style="text-align:right">Valor Líquido</th>
+          <th style="text-align:right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(p => {
+          const cor = corTipoProvento(p.tipo);
+          const srcLabel = p.origem === "pluggy" ? "XP / Pluggy" : "Manual";
+          return `
+            <tr>
+              <td style="color:var(--texto2);white-space:nowrap">${fmtData(p.data_pagamento)}</td>
+              <td>
+                <div style="font-weight:700">${escHtml(p.ativo)}</div>
+                <div class="cat-sub">${escHtml(p.descricao || srcLabel)}</div>
+              </td>
+              <td><span class="prov-tipo-badge" style="color:${cor};background:${cor}1c">${escHtml(p.tipo)}</span></td>
+              <td style="text-align:right;color:var(--texto2)">${p.cotas_base ? fmtQtd(p.cotas_base) : "—"}</td>
+              <td style="text-align:right;font-weight:700" class="positivo">+${fmt(p.valor)}</td>
+              <td style="text-align:right;white-space:nowrap">
+                <div class="cob-acoes" style="justify-content:flex-end">
+                  <button class="btn-mini" data-edit-prov="${p.id}">Editar</button>
+                  <button class="btn-mini perigo" data-del-prov="${p.id}">Excluir</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+document.getElementById("provAnoFiltro").addEventListener("change", (e) => {
+  provAnoSel = e.target.value;
+  renderProventosGrafico();
+});
+document.getElementById("provFiltroTipo").addEventListener("change", (e) => {
+  provTipoSel = e.target.value;
+  renderTabelaProventos();
+});
+document.getElementById("provFiltroBusca").addEventListener("input", (e) => {
+  provBuscaTxt = e.target.value;
+  renderTabelaProventos();
+});
+
+function abrirModalProvento(prov = null) {
+  document.getElementById("provModalId").value = prov ? prov.id : "";
+  document.getElementById("provModalTitulo").textContent = prov ? `Editar provento • ${prov.ativo}` : "Novo provento";
+  document.getElementById("provData").value = prov ? prov.data_pagamento : new Date().toISOString().slice(0, 10);
+  document.getElementById("provAtivo").value = prov ? prov.ativo : "";
+  document.getElementById("provTipo").value = prov ? prov.tipo : "Rendimento";
+  document.getElementById("provValor").value = prov ? prov.valor : "";
+  document.getElementById("provCotas").value = prov && prov.cotas_base ? prov.cotas_base : "";
+  document.getElementById("provObs").value = prov ? (prov.descricao || "") : "";
+
+  const ativosSugestao = new Set(proventosDados?.ativosDisponiveis || []);
+  (carteiraDados?.ativosDisponiveis || []).forEach(a => ativosSugestao.add(a));
+  document.getElementById("provAtivosDatalist").innerHTML = Array.from(ativosSugestao)
+    .sort()
+    .map(a => `<option value="${escHtml(a)}">`)
+    .join("");
+
+  document.getElementById("modalInvProvento").classList.add("aberto");
+}
+
+document.getElementById("btnNovoProventoInv").addEventListener("click", () => abrirModalProvento(null));
+document.getElementById("provCancelar").addEventListener("click", () => {
+  document.getElementById("modalInvProvento").classList.remove("aberto");
+});
+document.getElementById("modalInvProvento").addEventListener("click", (e) => {
+  if (e.target.id === "modalInvProvento") e.target.classList.remove("aberto");
+});
+
+document.getElementById("provSalvar").addEventListener("click", async () => {
+  const id = document.getElementById("provModalId").value;
+  const payload = {
+    data_pagamento: document.getElementById("provData").value,
+    ativo: document.getElementById("provAtivo").value.trim().toUpperCase(),
+    tipo: document.getElementById("provTipo").value,
+    valor: Number(document.getElementById("provValor").value),
+    cotas_base: document.getElementById("provCotas").value ? Number(document.getElementById("provCotas").value) : null,
+    descricao: document.getElementById("provObs").value.trim() || null,
+  };
+  if (!payload.data_pagamento || !payload.ativo || !(payload.valor > 0)) {
+    alert("Preencha data, ativo e valor líquido maior que zero.");
+    return;
+  }
+
+  const btn = document.getElementById("provSalvar");
+  btn.disabled = true;
+  try {
+    const url = id ? `/api/proventos/${id}` : "/api/proventos";
+    const method = id ? "PUT" : "POST";
+    const r = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error("Erro ao salvar provento");
+    document.getElementById("modalInvProvento").classList.remove("aberto");
+    await carregarProventos();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById("invTabelaProventos").addEventListener("click", async (e) => {
+  const editBtn = e.target.closest("[data-edit-prov]");
+  if (editBtn) {
+    const prov = (proventosDados?.lancamentos || []).find(p => String(p.id) === editBtn.dataset.editProv);
+    if (prov) abrirModalProvento(prov);
+    return;
+  }
+  const delBtn = e.target.closest("[data-del-prov]");
+  if (delBtn) {
+    if (!confirm("Remover este lançamento de provento?")) return;
+    await fetch(`/api/proventos/${delBtn.dataset.delProv}`, { method: "DELETE" });
+    await carregarProventos();
+  }
+});
+
+document.getElementById("btnSyncProventosInv").addEventListener("click", async () => {
+  const btn = document.getElementById("btnSyncProventosInv");
+  btn.disabled = true;
+  btn.textContent = "Importando…";
+  try {
+    const r = await fetch("/api/proventos/sincronizar", { method: "POST" }).then(x => x.json());
+    await carregarProventos();
+    alert(`Sincronização concluída: ${r.novos || 0} novo(s) provento(s) importado(s) da XP/Pluggy.`);
+  } catch (err) {
+    alert("Erro ao importar proventos: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Sincronizar da XP";
+  }
+});
+
+// ===== Módulo Backup em 2 Ambientes & Exportação =====
+function fmtBytes(b) {
+  if (!b) return "0 KB";
+  if (b < 1024 * 1024) return Math.max(1, Math.round(b / 1024)) + " KB";
+  return (b / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+function renderCardEnvBackup(titulo, info, lastRun) {
+  if (!info || !info.configured) {
+    return `
+      <div class="bkp-env-card">
+        <div class="bkp-env-topo">
+          <b>${escHtml(titulo)}</b>
+          <span class="cob-badge atrasado">Não mapeado</span>
+        </div>
+        <div class="cat-sub">Defina a pasta no ZimaOS/<code>docker-compose.yml</code> para ativar este destino.</div>
+      </div>
+    `;
+  }
+  const ultimo = info.files && info.files[0];
+  const badgeCls = !info.writable ? "atrasado" : (lastRun && lastRun.ok === false ? "atrasado" : "pago");
+  const badgeTxt = !info.writable ? "Sem permissão" : "Ativo";
+  return `
+    <div class="bkp-env-card">
+      <div class="bkp-env-topo">
+        <b>${escHtml(titulo)}</b>
+        <span class="cob-badge ${badgeCls}">${badgeTxt}</span>
+      </div>
+      <div class="cat-sub" style="word-break:break-all">Pasta: <code>${escHtml(info.dir)}</code></div>
+      <div class="cat-sub" style="margin-top:4px">
+        ${ultimo
+          ? `Último: <b>${dataBonita(ultimo.mtimeIso)}</b> (${fmtBytes(ultimo.sizeBytes)}) • ${info.files.length} arquivo(s)`
+          : "Nenhum snapshot gerado ainda"}
+      </div>
+      ${lastRun && lastRun.error ? `<div class="negativo" style="font-size:11.5px;margin-top:4px">${escHtml(lastRun.error)}</div>` : ""}
+    </div>
+  `;
+}
+
+async function renderBackupStatus() {
+  const grid = document.getElementById("bkpEnvGrid");
+  try {
+    const st = await fetch("/api/backup/status").then(r => r.json());
+    document.getElementById("bkpBadgeKeep").textContent = `Retenção: ${st.keep || 15} cópias`;
+    const lr = st.lastStatus || {};
+    grid.innerHTML =
+      renderCardEnvBackup("Ambiente 1 • HD Local", st.local, lr.local) +
+      renderCardEnvBackup("Ambiente 2 • Google Drive", st.cloud, lr.cloud);
+  } catch (err) {
+    grid.innerHTML = `<div class="vazio">Erro ao verificar backups: ${escHtml(err.message)}</div>`;
+  }
+}
+
+document.getElementById("btnBackupExport").addEventListener("click", () => {
+  document.getElementById("modalBackupExport").classList.add("aberto");
+  renderBackupStatus();
+});
+document.getElementById("bkpFechar").addEventListener("click", () => {
+  document.getElementById("modalBackupExport").classList.remove("aberto");
+});
+document.getElementById("modalBackupExport").addEventListener("click", (e) => {
+  if (e.target.id === "modalBackupExport") e.target.classList.remove("aberto");
+});
+
+document.getElementById("btnExecutarBackupAgora").addEventListener("click", async () => {
+  const btn = document.getElementById("btnExecutarBackupAgora");
+  btn.disabled = true;
+  btn.textContent = "Gerando cópia segura…";
+  try {
+    const res = await fetch("/api/backup/run", { method: "POST" }).then(r => r.json());
+    await renderBackupStatus();
+    if (!res.local?.ok && !res.cloud?.ok) {
+      alert("Não foi possível gravar o backup em nenhum destino. Verifique os volumes configurados.");
+    }
+  } catch (err) {
+    alert("Erro no backup: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Executar backup nos 2 ambientes agora";
+  }
+});
+
 document.getElementById("btnSync").addEventListener("click", async () => {
   const btn = document.getElementById("btnSync");
   btn.disabled = true;
   document.getElementById("btnSyncTxt").textContent = "Sincronizando…";
-  await fetch("/api/sync", { method: "POST" });
-  location.reload();
+  try {
+    const r = await fetch("/api/sync", { method: "POST" });
+    if (!r.ok) throw new Error("Falha na sincronização (" + r.status + ")");
+    location.reload();
+  } catch (err) {
+    alert("Erro ao sincronizar: " + err.message);
+    btn.disabled = false;
+    document.getElementById("btnSyncTxt").textContent = "Sincronizar agora";
+  }
 });
 
 carregarVisao();
